@@ -2,13 +2,20 @@
 
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function SignIn() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleGoogleSignIn = async () => {
+    if (!isMounted) return;
+    
     setIsLoading(true);
     try {
       await signIn('google', { callbackUrl: '/' });
@@ -29,7 +36,7 @@ export default function SignIn() {
         
         <button
           onClick={handleGoogleSignIn}
-          disabled={isLoading}
+          disabled={!isMounted || isLoading}
           className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 py-3 px-4 rounded-md font-medium hover:bg-gray-100 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">

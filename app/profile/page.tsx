@@ -3,14 +3,38 @@
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { Navbar } from '../components/Navbar';
+import { useState, useEffect } from 'react';
 
 export default function ProfilePage() {
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  // Only use useSession after component is mounted on client
   const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
-      redirect('/auth/signin');
+      if (isMounted) {
+        redirect('/auth/signin');
+      }
     },
   });
+
+  // Don't redirect during SSR to prevent hydration errors
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-[#191a1a]">
+        <Navbar />
+        <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="h-12 w-12 border-t-2 border-b-2 border-[#dbdbd9]"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (status === 'loading') {
     return (

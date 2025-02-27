@@ -3,10 +3,16 @@
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
 
 export function Navbar() {
   const { data: session, status } = useSession();
   const isLoading = status === 'loading';
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   return (
     <nav className="bg-[#202323] border-b border-[#dbdbd9]/10">
@@ -19,7 +25,9 @@ export function Navbar() {
           </div>
           
           <div className="flex items-center">
-            {isLoading ? (
+            {!isMounted ? (
+              <div className="h-8 w-8 rounded-full bg-[#dbdbd9]/20"></div>
+            ) : isLoading ? (
               <div className="h-8 w-8 rounded-full bg-[#dbdbd9]/20 animate-pulse"></div>
             ) : session ? (
               <div className="flex items-center space-x-4">
