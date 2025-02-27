@@ -1,6 +1,7 @@
 'use client';
 
 import { LearningPathInput } from "./components/LearningPathInput";
+import { Navbar } from "./components/Navbar";
 
 interface LearningStep {
   id: string;
@@ -19,8 +20,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#191a1a]">
-      <div className=" max-w-5xl mx-auto py-12 px-4 sm:px-6">
-        <div className=" mb-16">
+      <Navbar />
+      <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6">
+        <div className="mb-16">
           <h1 className="text-4xl font-bold tracking-tight text-[#dbdbd9] sm:text-5xl">
             DevPath, Project-based learning
           </h1>
