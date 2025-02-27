@@ -1,8 +1,9 @@
 import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
 
+// Use environment variable for API key
 const openai = new OpenAI({
-  apiKey: 'API_KEY_REMOVED',
+  apiKey: process.env.OPENAI_API_KEY || '',
 });
 
 export async function POST(req: Request) {
