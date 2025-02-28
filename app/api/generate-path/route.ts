@@ -13,16 +13,16 @@ export async function POST(req: Request) {
     // Get the user session
     const session = await getServerSession();
     
-    if (!session || !session.user) {
+    if (!session || !session.user || !session.user.email) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
     
-    // Get user from database to check credits
+    // Get user from database using email instead of ID
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { email: session.user.email },
     });
     
     if (!user) {
@@ -98,7 +98,7 @@ Include 4-6 main steps with 4-6 substeps each. Make the learning path comprehens
         }
       ],
       temperature: 0.7,
-      max_tokens: 2500,
+      max_tokens: 500,
     });
 
     const generatedPath = JSON.parse(completion.choices[0].message.content || '{"steps": []}');

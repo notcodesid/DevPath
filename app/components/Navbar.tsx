@@ -3,16 +3,40 @@
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LogOut, User } from 'lucide-react';
 
 export function Navbar() {
   // Always call hooks at the top level
   const { data: session, status } = useSession();
   const [mounted, setMounted] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // For debugging - log session state
+  useEffect(() => {
+    if (mounted) {
+      console.log('Session status:', status);
+      console.log('Session data:', session);
+    }
+  }, [mounted, session, status]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   // Show a placeholder during SSR and initial client render
@@ -49,48 +73,56 @@ export function Navbar() {
             {status === 'loading' ? (
               <div className="h-8 w-8 rounded-full bg-[#dbdbd9]/20 animate-pulse"></div>
             ) : session ? (
-              <div className="flex items-center space-x-4">
-                <Link 
-                  href="/profile" 
-                  className="text-sm text-[#dbdbd9] hover:text-white transition-colors flex items-center gap-2"
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center focus:outline-none"
                 >
-                  <span>Profile</span>
-                  <User className="h-4 w-4" />
-                </Link>
-                
-                <div className="flex items-center space-x-3">
                   {session.user.image ? (
-                    <Link href="/profile" className="relative h-8 w-8 rounded-full overflow-hidden">
+                    <div className="relative h-8 w-8 rounded-full overflow-hidden">
                       <Image
                         src={session.user.image}
                         alt={session.user.name || 'User'}
                         fill
                         className="object-cover"
                       />
-                    </Link>
+                    </div>
                   ) : (
                     <div className="h-8 w-8 rounded-full bg-[#dbdbd9]/40 flex items-center justify-center text-[#191a1a] font-medium">
                       {session.user.name?.charAt(0) || 'U'}
                     </div>
                   )}
-                  
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-[#dbdbd9]">
-                      {session.user.name}
-                    </span>
-                    <span className="text-xs text-[#dbdbd9]/60">
-                      {session.user.credits} credits
-                    </span>
+                </button>
+                
+                {/* Dropdown menu */}
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-[#202323] border border-[#dbdbd9]/20 rounded-md shadow-lg z-10">
+                    <div className="p-3 border-b border-[#dbdbd9]/10">
+                      <p className="text-sm font-medium text-[#dbdbd9]">{session.user.name}</p>
+                      <p className="text-xs text-[#dbdbd9]/60">{session.user.credits} credits</p>
+                    </div>
+                    <div className="py-1">
+                      <Link 
+                        href="/profile" 
+                        className=" px-4 py-2 text-sm text-[#dbdbd9] hover:bg-[#dbdbd9]/10 transition-colors flex items-center gap-2"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <User className="h-4 w-4" />
+                        <span>Profile</span>
+                      </Link>
+                      <button
+                        className="w-full text-left px-4 py-2 text-sm text-[#dbdbd9] hover:bg-[#dbdbd9]/10 transition-colors flex items-center gap-2"
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          signOut({ callbackUrl: '/' });
+                        }}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign out</span>
+                      </button>
+                    </div>
                   </div>
-                  
-                  <button
-                    className="ml-2 p-1.5 text-[#dbdbd9] hover:text-white hover:bg-[#dbdbd9]/10 rounded-full transition-colors"
-                    onClick={() => signOut({ callbackUrl: '/' })}
-                    title="Sign out"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </button>
-                </div>
+                )}
               </div>
             ) : (
               <Link

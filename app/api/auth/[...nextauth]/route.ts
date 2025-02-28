@@ -26,13 +26,27 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
-      const dbUser = user as User;
-      
-      if (session.user) {
+    async jwt({ token, user }) {
+      // Add user data to the JWT token when it's created
+      if (user) {
+        token.id = user.id;
+        token.credits = (user as any).credits || 4;
+      }
+      return token;
+    },
+    async session({ session, token, user }) {
+      // For JWT strategy, use the token
+      if (token) {
+        session.user.id = token.id as string;
+        session.user.credits = token.credits as number;
+      } 
+      // For database strategy, use the user
+      else if (user) {
+        const dbUser = user as User;
         session.user.id = dbUser.id;
         session.user.credits = dbUser.credits;
       }
+      
       return session;
     },
   },
@@ -41,7 +55,9 @@ const handler = NextAuth({
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  debug: process.env.NODE_ENV === 'development',
 });
 
 export { handler as GET, handler as POST }; 

@@ -5,8 +5,10 @@ import { getToken } from 'next-auth/jwt';
 export async function middleware(request: NextRequest) {
   // Only apply to generate-path API route
   if (request.nextUrl.pathname === '/api/generate-path') {
-    const token = await getToken({ req: request });
-    
+    const token = await getToken({ 
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET
+    });    
     // Check if user is authenticated
     if (!token) {
       return NextResponse.json(
