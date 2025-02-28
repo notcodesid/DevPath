@@ -3,5 +3,13 @@
 import { SessionProvider } from 'next-auth/react';
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <SessionProvider>{children}</SessionProvider>;
+  // Always render the SessionProvider, but use suppressHydrationWarning
+  // to prevent hydration errors
+  return (
+    <SessionProvider>
+      <div suppressHydrationWarning>
+        {children}
+      </div>
+    </SessionProvider>
+  );
 } 

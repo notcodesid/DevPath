@@ -19,10 +19,12 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  credits       Int       @default(4)  // Default 4 credits for new users
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
   sessions      Session[]
+  learningPaths LearningPath[]
 }
 
 model Account {
@@ -58,4 +60,15 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model LearningPath {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  steps       Json     // Store steps as JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
