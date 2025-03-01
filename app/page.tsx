@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { LearningPathInput } from "./components/LearningPathInput";
 import { Navbar } from "./components/Navbar";
+import { Share2 } from 'lucide-react';
 
 interface LearningStep {
   id: string;
@@ -55,6 +56,12 @@ export default function Home() {
           <p className="mt-4 text-xl font-normal text-[#dbdbd9]/70">
             Tell us what you want to learn, and we&apos;ll create a personalized learning path
           </p>
+          <div className="mt-4 flex items-center gap-2 text-[#dbdbd9]/60">
+            <Share2 className="h-4 w-4" />
+            <span className="text-sm">
+              Now with sharing! Generate a path and share it with anyone via a unique link.
+            </span>
+          </div>
         </div>
 
         <LearningPathInput onPathGenerated={handlePathGenerated} />
