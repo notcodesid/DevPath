@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface LearningStep {
   id: string;
@@ -13,15 +14,15 @@ interface LearningStep {
 }
 
 interface LearningPathInputProps {
-  onPathGenerated: (steps: LearningStep[]) => void;
+  onPathGenerated: () => void;
   onShareIdGenerated?: (shareId: string) => void;
 }
 
 export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: LearningPathInputProps) {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedPath, setGeneratedPath] = useState<LearningStep[]>([]);
   const [error, setError] = useState<string | null>(null);
   
   // Set mounted state after hydration
@@ -56,15 +57,14 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
         throw new Error('Invalid response format');
       }
       
-      setGeneratedPath(data.steps);
-      onPathGenerated(data.steps);
+      // Call onPathGenerated to update loading state
+      onPathGenerated();
       
-      // Automatically save the learning path
+      // Automatically save the learning path and redirect
       await saveLearningPath(data.steps);
     } catch (error) {
       console.error('Error generating learning path:', error);
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
-      setGeneratedPath([]);
     } finally {
       setIsLoading(false);
     }
@@ -89,9 +89,14 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
       }
 
       const data = await response.json();
+      
+      // Call onShareIdGenerated to update the shareId state in the parent component
       if (onShareIdGenerated) {
         onShareIdGenerated(data.shareId);
       }
+      
+      // Redirect to the shared path page
+      router.push(`/shared/${data.shareId}`);
     } catch (error) {
       console.error('Error saving learning path:', error);
       // Don't show error to user for automatic saving

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { LearningPathInput } from './components/LearningPathInput';
-import { Timeline } from './components/Timeline';
 import Navbar from './components/navbar';
 
 interface LearningStep {
@@ -15,34 +14,15 @@ interface LearningStep {
 }
 
 export default function Home() {
-  const [learningPath, setLearningPath] = useState<{
-    title: string;
-    description: string;
-    steps: LearningStep[];
-  }>({
-    title: '',
-    description: '',
-    steps: [],
-  });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [shareId, setShareId] = useState<string | undefined>(undefined);
 
-  const handlePathGenerated = (steps: LearningStep[]) => {
-    setLearningPath({
-      title: 'Your Learning Path',
-      description: 'A personalized path based on your interests',
-      steps,
-    });
+  const handlePathGenerated = () => {
     setIsLoading(false);
   };
 
   const handleShareIdGenerated = (id: string) => {
     setShareId(id);
-  };
-
-  const handleError = (errorMessage: string) => {
-    setError(errorMessage);
   };
 
   return (
@@ -58,15 +38,15 @@ export default function Home() {
 
         <div className="w-full max-w-2xl">
           <LearningPathInput 
-            onPathGenerated={(steps) => {
+            onPathGenerated={() => {
               setIsLoading(true);
-              handlePathGenerated(steps);
+              handlePathGenerated();
             }}
             onShareIdGenerated={handleShareIdGenerated}
           />
         </div>
 
-        {isLoading ? (
+        {isLoading && (
           <div className="mt-12 w-full max-w-2xl">
             <div className="h-8 w-64 bg-[#202323] rounded-md animate-pulse mx-auto mb-6"></div>
             <div className="space-y-4">
@@ -81,20 +61,7 @@ export default function Home() {
               ))}
             </div>
           </div>
-        ) : error ? (
-          <div className="mt-12 w-full max-w-2xl p-4 bg-red-500/10 border border-red-500/30 rounded-md text-red-200">
-            <p className="font-medium">Error generating learning path</p>
-            <p className="text-sm mt-1 text-red-200/70">{error}</p>
-          </div>
-        ) : learningPath.steps.length > 0 ? (
-          <div className="mt-12 w-full max-w-3xl">
-            <div className="mb-6 text-center">
-              <h2 className="text-2xl font-semibold text-white">{learningPath.title}</h2>
-              <p className="text-[#dbdbd9]/70 mt-2">{learningPath.description}</p>
-            </div>
-            <Timeline steps={learningPath.steps} />
-          </div>
-        ) : null}
+        )}
       </div>
     </div>
   );

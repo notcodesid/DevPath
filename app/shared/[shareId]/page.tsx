@@ -5,6 +5,7 @@ import { Timeline } from '@/app/components/Timeline';
 import { Loader2, Send } from 'lucide-react';
 import Link from 'next/link';
 import Navbar from '@/app/components/navbar';
+import { useRouter } from 'next/navigation';
 
 interface LearningStep {
   id: string;
@@ -24,13 +25,12 @@ interface LearningPath {
 }
 
 export default function SharedPathPage({ params }: { params: { shareId: string } }) {
+  const router = useRouter();
   const [learningPath, setLearningPath] = useState<LearningPath | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPath, setGeneratedPath] = useState<LearningStep[] | null>(null);
-  const [shareId, setShareId] = useState<string | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
   const [currentShareId, setCurrentShareId] = useState<string | null>(null);
 
@@ -77,7 +77,6 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
     
     setIsGenerating(true);
     setError(null);
-    setShareId(undefined);
     
     try {
       const response = await fetch('/api/generate-path', {
@@ -99,9 +98,7 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
         throw new Error('Invalid response format');
       }
       
-      setGeneratedPath(data.steps);
-      
-      // Automatically save the learning path
+      // Automatically save the learning path and redirect to new page
       await saveLearningPath(data.steps);
     } catch (error) {
       console.error('Error generating learning path:', error);
@@ -130,7 +127,8 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
       }
 
       const data = await response.json();
-      setShareId(data.shareId);
+      // Redirect to the new shared path page
+      router.push(`/shared/${data.shareId}`);
     } catch (error) {
       console.error('Error saving learning path:', error);
       // Don't show error to user for automatic saving
@@ -203,7 +201,7 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
 
   return (
     <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
-      <Navbar shareId={shareId || params.shareId} />
+      <Navbar shareId={params.shareId} />
       <div className="max-w-5xl mx-auto p-6">
         <div className="mb-8 max-w-2xl mx-auto">
           <div className="flex justify-between items-center">
@@ -219,16 +217,6 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
         
         <div className="max-w-3xl mx-auto">
           <Timeline steps={learningPath.steps} />
-          
-          {/* Display generated path if available */}
-          {generatedPath && (
-            <div className="mt-12 border-t border-[#dbdbd9]/10 pt-6">
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-white">Your Generated Path</h2>
-              </div>
-              <Timeline steps={generatedPath} />
-            </div>
-          )}
         </div>
       </div>
       
