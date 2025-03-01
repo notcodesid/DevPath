@@ -26,6 +26,8 @@ interface LearningPath {
 
 export default function SharedPathPage({ params }: { params: { shareId: string } }) {
   const router = useRouter();
+  const shareId = params.shareId;
+  
   const [learningPath, setLearningPath] = useState<LearningPath | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,10 +39,10 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
   useEffect(() => {
     setMounted(true);
     // Safely set the shareId from params
-    if (params?.shareId) {
-      setCurrentShareId(params.shareId);
+    if (shareId) {
+      setCurrentShareId(shareId);
     }
-  }, [params]);
+  }, [shareId]);
 
   useEffect(() => {
     const fetchSharedPath = async () => {
@@ -201,7 +203,7 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
 
   return (
     <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
-      <Navbar shareId={params.shareId} />
+      <Navbar shareId={shareId} />
       <div className="max-w-5xl mx-auto p-6">
         <div className="mb-8 max-w-2xl mx-auto">
           <div className="flex justify-between items-center">

@@ -4,15 +4,6 @@ import { useState } from 'react';
 import { LearningPathInput } from './components/LearningPathInput';
 import Navbar from './components/navbar';
 
-interface LearningStep {
-  id: string;
-  title: string;
-  duration: string;
-  description: string;
-  subSteps: string[];
-  activeUsers?: number;
-}
-
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [shareId, setShareId] = useState<string | undefined>(undefined);
