@@ -30,7 +30,7 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPath, setGeneratedPath] = useState<LearningStep[] | null>(null);
-  const [shareId, setShareId] = useState<string | null>(null);
+  const [shareId, setShareId] = useState<string | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
   const [currentShareId, setCurrentShareId] = useState<string | null>(null);
 
@@ -73,11 +73,11 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !mounted) return;
+    if (!input.trim() || isGenerating) return;
     
     setIsGenerating(true);
     setError(null);
-    setShareId(null);
+    setShareId(undefined);
     
     try {
       const response = await fetch('/api/generate-path', {

@@ -33,21 +33,22 @@ export default function Navbar({ shareId }: NavbarProps) {
   if (!mounted) return null;
 
   return (
-    <header className="border-b border-[#dbdbd9]/5" p-2>
+    <header className="border-b border-[#dbdbd9]/5">
       <div className="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center">
-            <Link href="/"> 
-          <span className="text-lg font-semibold text-white">
-            <Image src={Logo} alt="DevPath" width={25} height={25} />
-          </span>
-        </Link>
+          <Link href="/">
+            <div className="flex items-center gap-2">
+              <Image src={Logo} alt="DevPath" width={25} height={25} />
+              
+            </div>
+          </Link>
         </div>
         
         <div className="flex items-center gap-2">
           {shareId && (
             <button
               onClick={copyShareLink}
-              className="flex items-center gap-2 px-3 py-1.5 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-full transition-colors text-sm"
+              className="flex items-center gap-2 px-3 py-3 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-full transition-colors text-sm"
             >
               {copied ? (
                 <>
@@ -57,7 +58,7 @@ export default function Navbar({ shareId }: NavbarProps) {
               ) : (
                 <>
                   <Share2 className="h-3.5 w-3.5" />
-                  <span>Share</span>
+                  <span>Copy Link</span>
                 </>
               )}
             </button>

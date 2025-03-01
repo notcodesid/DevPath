@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Send, Loader2, Check, Share2 } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 
 interface LearningStep {
   id: string;
@@ -14,16 +14,15 @@ interface LearningStep {
 
 interface LearningPathInputProps {
   onPathGenerated: (steps: LearningStep[]) => void;
+  onShareIdGenerated?: (shareId: string) => void;
 }
 
-export function LearningPathInput({ onPathGenerated }: LearningPathInputProps) {
+export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: LearningPathInputProps) {
   const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [generatedPath, setGeneratedPath] = useState<LearningStep[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [shareId, setShareId] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   
   // Set mounted state after hydration
   useEffect(() => {
@@ -36,7 +35,6 @@ export function LearningPathInput({ onPathGenerated }: LearningPathInputProps) {
     
     setIsLoading(true);
     setError(null);
-    setShareId(null);
     
     try {
       const response = await fetch('/api/generate-path', {
@@ -91,23 +89,13 @@ export function LearningPathInput({ onPathGenerated }: LearningPathInputProps) {
       }
 
       const data = await response.json();
-      setShareId(data.shareId);
+      if (onShareIdGenerated) {
+        onShareIdGenerated(data.shareId);
+      }
     } catch (error) {
       console.error('Error saving learning path:', error);
       // Don't show error to user for automatic saving
     }
-  };
-
-  const copyShareLink = () => {
-    if (!shareId) return;
-    
-    const shareUrl = `${window.location.origin}/shared/${shareId}`;
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
   };
 
   // Show a loading skeleton during SSR and initial client render
@@ -154,27 +142,6 @@ export function LearningPathInput({ onPathGenerated }: LearningPathInputProps) {
       {error && (
         <div className="mt-4 p-4 bg-red-900/20 border border-red-900/30 rounded-md w-full">
           <p className="text-red-400">{error}</p>
-        </div>
-      )}
-      
-      {shareId && generatedPath.length > 0 && (
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={copyShareLink}
-            className="flex items-center gap-2 px-4 py-2 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-md transition-colors text-sm"
-          >
-            {copied ? (
-              <>
-                <Check className="h-4 w-4 text-green-500" />
-                <span>Copied!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="h-4 w-4" />
-                <span>Copy Share Link</span>
-              </>
-            )}
-          </button>
         </div>
       )}
     </div>

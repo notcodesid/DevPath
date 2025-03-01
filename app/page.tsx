@@ -26,6 +26,7 @@ export default function Home() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shareId, setShareId] = useState<string | undefined>(undefined);
 
   const handlePathGenerated = (steps: LearningStep[]) => {
     setLearningPath({
@@ -36,9 +37,17 @@ export default function Home() {
     setIsLoading(false);
   };
 
+  const handleShareIdGenerated = (id: string) => {
+    setShareId(id);
+  };
+
+  const handleError = (errorMessage: string) => {
+    setError(errorMessage);
+  };
+
   return (
     <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
-      <Navbar />
+      <Navbar shareId={shareId} />
       <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
         <div className="w-full max-w-2xl mx-auto text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">What do you want to learn?</h1>
@@ -52,7 +61,8 @@ export default function Home() {
             onPathGenerated={(steps) => {
               setIsLoading(true);
               handlePathGenerated(steps);
-            }} 
+            }}
+            onShareIdGenerated={handleShareIdGenerated}
           />
         </div>
 
