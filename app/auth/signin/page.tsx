@@ -1,11 +1,9 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 export default function SignIn() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -127,20 +125,7 @@ export default function SignIn() {
             By signing in, you agree to our Terms of Service and Privacy Policy
           </p>
         </div>
-        
-        <div className="mt-8 p-4 bg-[#191a1a] rounded-md">
-          <h3 className="text-sm font-medium text-[#dbdbd9] mb-2">Google OAuth Configuration Guide:</h3>
-          <ol className="text-xs text-[#dbdbd9]/70 space-y-2 list-decimal pl-4">
-            <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-[#dbdbd9] underline">Google Cloud Console</a></li>
-            <li>Select your project</li>
-            <li>Edit the OAuth 2.0 Client ID you're using</li>
-            <li>Under "Authorized redirect URIs", make sure you have:
-              <pre className="mt-1 p-2 bg-[#202323] rounded text-[#dbdbd9]/60">http://localhost:3001/api/auth/callback/google</pre>
-            </li>
-            <li>Save your changes</li>
-            <li>Wait a few minutes for changes to propagate</li>
-          </ol>
-        </div>
+  
       </div>
     </div>
   );

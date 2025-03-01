@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { prisma } from '@/lib/prisma';
 
 // Initialize Gemini API client
 const apiKey = process.env.GEMINI_API_KEY;
@@ -8,35 +6,6 @@ console.log('Gemini API Key (masked):', apiKey ? `${apiKey.substring(0, 3)}...${
 
 export async function POST(req: Request) {
   try {
-    // Get the user session
-    const session = await getServerSession();
-    
-    if (!session || !session.user || !session.user.email) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-    
-    // Get user from database using email instead of ID
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
-    
-    if (user.credits <= 0) {
-      return NextResponse.json(
-        { error: 'No credits remaining. Please upgrade your account.' },
-        { status: 403 }
-      );
-    }
-    
     const { prompt } = await req.json();
 
     if (!apiKey) {
@@ -65,10 +34,20 @@ CONTENT STRUCTURE:
 - Emphasize modern best practices and industry standards
 
 RESOURCE GUIDELINES:
+- IMPORTANT: For EACH step, include at least 2-3 specific learning resources with proper markdown links
+- Format resources exactly as: "Resource: [Title](URL) - Brief description of what this resource covers"
 - Only include links that are likely to be valid and maintained
 - Prefer official documentation, well-known platforms, and reputable sources
 - For each resource, briefly explain what the learner will gain from it
 - Include a mix of reading materials, videos, and hands-on exercises
+
+CODE EXAMPLES GUIDELINES:
+- IMPORTANT: For EACH step, include at least 1-2 practice exercises or project components
+- Format practice exercises exactly as: "Practice exercise: Description of what to build or implement"
+- Format project components exactly as: "Project component: How this fits into the overall learning project"
+- Be specific about what the learner should build or implement
+- Include clear instructions and expected outcomes
+- Suggest tools, libraries, or frameworks to use
 
 Return your response in the following JSON format:
 {
@@ -81,6 +60,7 @@ Return your response in the following JSON format:
       "subSteps": [
         "Specific task or concept to learn with clear instructions",
         "Resource: [Title](URL) - Brief description of what this resource covers",
+        "Resource: [Another Title](URL) - Brief description of what this resource covers",
         "Practice exercise: Description of what to build or implement",
         "Project component: How this fits into the overall learning project"
       ]
@@ -144,27 +124,8 @@ Include 4-6 main steps with 4-6 substeps each. Make the learning path comprehens
       console.error('No JSON found in Gemini response');
       generatedPath = { steps: [] };
     }
-    
-    // Decrement user credits
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { credits: user.credits - 1 },
-    });
-    
-    // Save the learning path to the database
-    await prisma.learningPath.create({
-      data: {
-        title: prompt.substring(0, 100), // Use first 100 chars of prompt as title
-        description: prompt,
-        steps: generatedPath,
-        userId: user.id,
-      },
-    });
 
-    return NextResponse.json({
-      ...generatedPath,
-      creditsRemaining: user.credits - 1
-    });
+    return NextResponse.json(generatedPath);
   } catch (error) {
     console.error('Error generating learning path:', error);
     return NextResponse.json(

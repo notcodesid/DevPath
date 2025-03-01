@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Book, Code } from 'lucide-react';
+import { ChevronDown, ChevronUp, Book, Code, X } from 'lucide-react';
 import { cn } from '@/app/lib/utils';
 import {
   Collapsible,
@@ -78,8 +78,95 @@ const normalizeDurations = (steps: TimelineStep[]): TimelineStep[] => {
   });
 };
 
+// Function to extract learning materials from substeps
+const extractLearningMaterials = (subSteps: string[]): { title: string; url: string; description: string }[] => {
+  const materials: { title: string; url: string; description: string }[] = [];
+  
+  subSteps.forEach(subStep => {
+    // Look for markdown links with "Resource:" prefix
+    const resourceMatch = subStep.match(/Resource:\s*\[([^\]]+)\]\(([^)]+)\)(?:\s*-\s*(.+))?/);
+    if (resourceMatch) {
+      materials.push({
+        title: resourceMatch[1],
+        url: resourceMatch[2],
+        description: resourceMatch[3] || ''
+      });
+    }
+  });
+  
+  return materials;
+};
+
+// Function to extract code examples from substeps
+const extractCodeExamples = (subSteps: string[]): { title: string; code: string }[] => {
+  const examples: { title: string; code: string }[] = [];
+  
+  subSteps.forEach(subStep => {
+    // Look for "Practice exercise:" or "Project component:" prefixes
+    if (subStep.startsWith('Practice exercise:') || subStep.startsWith('Project component:')) {
+      const title = subStep.startsWith('Practice exercise:') 
+        ? 'Practice Exercise' 
+        : 'Project Component';
+      const code = subStep.replace(/^(Practice exercise:|Project component:)\s*/, '').trim();
+      
+      examples.push({
+        title,
+        code
+      });
+    }
+  });
+  
+  return examples;
+};
+
+// Modal component for displaying content
+const Modal = ({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  title: string; 
+  children: React.ReactNode 
+}) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-[#202323] rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col">
+        <div className="flex justify-between items-center p-4 border-b border-[#dbdbd9]/10">
+          <h3 className="text-lg font-medium text-[#dbdbd9]">{title}</h3>
+          <button 
+            onClick={onClose}
+            className="text-[#dbdbd9]/60 hover:text-[#dbdbd9] transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="p-4 overflow-y-auto flex-1">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export function Timeline({ steps }: TimelineProps) {
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
+  const [modalContent, setModalContent] = useState<{
+    isOpen: boolean;
+    type: 'materials' | 'code';
+    title: string;
+    step: TimelineStep | null;
+  }>({
+    isOpen: false,
+    type: 'materials',
+    title: '',
+    step: null
+  });
+  
   const normalizedSteps = normalizeDurations(steps);
 
   const toggleStep = (stepId: string) => {
@@ -90,6 +177,31 @@ export function Timeline({ steps }: TimelineProps) {
       newExpanded.add(stepId);
     }
     setExpandedSteps(newExpanded);
+  };
+  
+  const openMaterialsModal = (step: TimelineStep) => {
+    setModalContent({
+      isOpen: true,
+      type: 'materials',
+      title: `Learning Materials: ${step.title}`,
+      step
+    });
+  };
+  
+  const openCodeModal = (step: TimelineStep) => {
+    setModalContent({
+      isOpen: true,
+      type: 'code',
+      title: `Code Examples: ${step.title}`,
+      step
+    });
+  };
+  
+  const closeModal = () => {
+    setModalContent({
+      ...modalContent,
+      isOpen: false
+    });
   };
 
   return (
@@ -148,11 +260,17 @@ export function Timeline({ steps }: TimelineProps) {
                       </div>
                       
                       <div className="flex space-x-4 mt-6">
-                        <button className="inline-flex items-center space-x-2 px-4 py-2 bg-[#202323] text-[#dbdbd9] rounded-md hover:bg-[#202323]/80 font-medium transition-colors">
+                        <button 
+                          onClick={() => openMaterialsModal(step)}
+                          className="inline-flex items-center space-x-2 px-4 py-2 bg-[#202323] text-[#dbdbd9] rounded-md hover:bg-[#202323]/80 font-medium transition-colors"
+                        >
                           <Book className="h-4 w-4" />
                           <span>Learning Materials</span>
                         </button>
-                        <button className="inline-flex items-center space-x-2 px-4 py-2 bg-[#202323] text-[#dbdbd9] rounded-md hover:bg-[#202323]/80 font-medium transition-colors">
+                        <button 
+                          onClick={() => openCodeModal(step)}
+                          className="inline-flex items-center space-x-2 px-4 py-2 bg-[#202323] text-[#dbdbd9] rounded-md hover:bg-[#202323]/80 font-medium transition-colors"
+                        >
                           <Code className="h-4 w-4" />
                           <span>Code Examples</span>
                         </button>
@@ -165,6 +283,76 @@ export function Timeline({ steps }: TimelineProps) {
           </div>
         );
       })}
+      
+      {/* Learning Materials Modal */}
+      <Modal 
+        isOpen={modalContent.isOpen && modalContent.type === 'materials'} 
+        onClose={closeModal}
+        title={modalContent.title}
+      >
+        {modalContent.step && (
+          <div className="space-y-6">
+            {extractLearningMaterials(modalContent.step.subSteps).length > 0 ? (
+              extractLearningMaterials(modalContent.step.subSteps).map((material, index) => (
+                <div key={index} className="bg-[#191a1a] p-4 rounded-md">
+                  <h4 className="text-[#dbdbd9] font-medium mb-2">
+                    <a 
+                      href={material.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="hover:underline inline-flex items-center gap-1"
+                    >
+                      {material.title}
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 ml-1">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                      </svg>
+                    </a>
+                  </h4>
+                  {material.description && (
+                    <p className="text-[#dbdbd9]/70 text-sm">{material.description}</p>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-[#dbdbd9]/60">No learning materials found for this step.</p>
+                <p className="text-[#dbdbd9]/40 text-sm mt-2">Try checking the links in the step description.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+      
+      {/* Code Examples Modal */}
+      <Modal 
+        isOpen={modalContent.isOpen && modalContent.type === 'code'} 
+        onClose={closeModal}
+        title={modalContent.title}
+      >
+        {modalContent.step && (
+          <div className="space-y-6">
+            {extractCodeExamples(modalContent.step.subSteps).length > 0 ? (
+              extractCodeExamples(modalContent.step.subSteps).map((example, index) => (
+                <div key={index} className="bg-[#191a1a] rounded-md overflow-hidden">
+                  <div className="bg-[#202323] px-4 py-2 border-b border-[#dbdbd9]/10">
+                    <h4 className="text-[#dbdbd9] font-medium">{example.title}</h4>
+                  </div>
+                  <div className="p-4">
+                    <pre className="text-[#dbdbd9]/90 text-sm whitespace-pre-wrap font-mono">{example.code}</pre>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-[#dbdbd9]/60">No code examples found for this step.</p>
+                <p className="text-[#dbdbd9]/40 text-sm mt-2">Try expanding the step to see all instructions.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 } 
