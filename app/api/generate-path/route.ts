@@ -1,12 +1,10 @@
-import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 
-// Use environment variable for API key
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-});
+// Initialize Gemini API client
+const apiKey = process.env.GEMINI_API_KEY;
+console.log('Gemini API Key (masked):', apiKey ? `${apiKey.substring(0, 3)}...${apiKey.substring(apiKey.length - 3)}` : 'undefined');
 
 export async function POST(req: Request) {
   try {
@@ -41,12 +39,12 @@ export async function POST(req: Request) {
     
     const { prompt } = await req.json();
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert curriculum designer specializing in project-based learning for technology topics. 
+    if (!apiKey) {
+      throw new Error('Gemini API key is not configured');
+    }
+
+    // Create the system prompt and user prompt
+    const systemPrompt = `You are an expert curriculum designer specializing in project-based learning for technology topics. 
           
 Your task is to create a detailed, practical learning path based on the user's request. Follow these guidelines carefully:
 
@@ -90,18 +88,62 @@ Return your response in the following JSON format:
   ]
 }
 
-Include 4-6 main steps with 4-6 substeps each. Make the learning path comprehensive but achievable.`
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-    });
+Include 4-6 main steps with 4-6 substeps each. Make the learning path comprehensive but achievable.`;
 
-    const generatedPath = JSON.parse(completion.choices[0].message.content || '{"steps": []}');
+    // Combine system prompt and user prompt
+    const fullPrompt = `${systemPrompt}\n\nUser request: ${prompt}`;
+
+    // Make direct fetch request to Gemini API
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: fullPrompt
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 8192
+          }
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Gemini API error:', errorData);
+      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates[0].content.parts[0].text;
+
+    // Parse the JSON from the response
+    // Find JSON content between curly braces
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    let generatedPath;
+    
+    if (jsonMatch) {
+      try {
+        generatedPath = JSON.parse(jsonMatch[0]);
+      } catch (e) {
+        console.error('Error parsing JSON from Gemini response:', e);
+        generatedPath = { steps: [] };
+      }
+    } else {
+      console.error('No JSON found in Gemini response');
+      generatedPath = { steps: [] };
+    }
     
     // Decrement user credits
     await prisma.user.update({
@@ -118,7 +160,7 @@ Include 4-6 main steps with 4-6 substeps each. Make the learning path comprehens
         userId: user.id,
       },
     });
-    
+
     return NextResponse.json({
       ...generatedPath,
       creditsRemaining: user.credits - 1

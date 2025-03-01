@@ -6,7 +6,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // Always render the SessionProvider, but use suppressHydrationWarning
   // to prevent hydration errors
   return (
-    <SessionProvider>
+    <SessionProvider refetchInterval={5 * 60}>
       <div suppressHydrationWarning>
         {children}
       </div>

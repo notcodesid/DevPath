@@ -8,6 +8,7 @@ export default function SignIn() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -17,10 +18,23 @@ export default function SignIn() {
     if (!mounted) return;
     
     setIsLoading(true);
+    setError(null);
+    
     try {
-      await signIn('google', { callbackUrl: '/' });
+      console.log('Starting Google sign-in process...');
+      const result = await signIn('google', { 
+        callbackUrl: '/',
+        redirect: true
+      });
+      
+      console.log('Sign-in result:', result);
+      
+      if (result?.error) {
+        setError(result.error);
+      }
     } catch (error) {
       console.error('Error signing in with Google:', error);
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -76,6 +90,12 @@ export default function SignIn() {
           Continue with Google to access personalized learning paths
         </p>
         
+        {error && (
+          <div className="p-4 bg-red-900/20 border border-red-900/30 rounded-md mb-6">
+            <p className="text-red-400">{error}</p>
+          </div>
+        )}
+        
         <button
           onClick={handleGoogleSignIn}
           disabled={isLoading}
@@ -106,6 +126,20 @@ export default function SignIn() {
           <p className="text-sm text-[#dbdbd9]/50">
             By signing in, you agree to our Terms of Service and Privacy Policy
           </p>
+        </div>
+        
+        <div className="mt-8 p-4 bg-[#191a1a] rounded-md">
+          <h3 className="text-sm font-medium text-[#dbdbd9] mb-2">Google OAuth Configuration Guide:</h3>
+          <ol className="text-xs text-[#dbdbd9]/70 space-y-2 list-decimal pl-4">
+            <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-[#dbdbd9] underline">Google Cloud Console</a></li>
+            <li>Select your project</li>
+            <li>Edit the OAuth 2.0 Client ID you're using</li>
+            <li>Under "Authorized redirect URIs", make sure you have:
+              <pre className="mt-1 p-2 bg-[#202323] rounded text-[#dbdbd9]/60">http://localhost:3001/api/auth/callback/google</pre>
+            </li>
+            <li>Save your changes</li>
+            <li>Wait a few minutes for changes to propagate</li>
+          </ol>
         </div>
       </div>
     </div>
