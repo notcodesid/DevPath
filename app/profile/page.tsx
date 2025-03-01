@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/app/components/navbar';
+import AppLayout from '@/app/components/AppLayout';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 
@@ -54,19 +54,17 @@ export default function ProfilePage() {
 
   if (status === 'loading' || isLoading) {
     return (
-      <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
-        <Navbar />
+      <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[80vh]">
           <Loader2 className="h-8 w-8 animate-spin text-[#dbdbd9]" />
           <p className="mt-4">Loading your profile...</p>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
-      <Navbar />
+    <AppLayout>
       <div className="max-w-4xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold mb-8">Your Learning Paths</h1>
         
@@ -105,6 +103,6 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
-    </div>
+    </AppLayout>
   );
 } 

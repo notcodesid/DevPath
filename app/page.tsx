@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { LearningPathInput } from './components/LearningPathInput';
-import Navbar from './components/navbar';
+import AppLayout from './components/AppLayout';
 import { useSession } from 'next-auth/react';
 
 export default function Home() {
-  const { status } = useSession();
+  useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [shareId, setShareId] = useState<string | undefined>(undefined);
 
@@ -19,8 +19,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
-      <Navbar shareId={shareId} />
+    <AppLayout shareId={shareId}>
       <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
         <div className="w-full max-w-2xl mx-auto text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">What do you want to learn?</h1>
@@ -56,6 +55,6 @@ export default function Home() {
           </div>
         )}
       </div>
-    </div>
+    </AppLayout>
   );
 }

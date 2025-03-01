@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Timeline } from '@/app/components/Timeline';
 import { Loader2, Send } from 'lucide-react';
 import Link from 'next/link';
-import Navbar from '@/app/components/navbar';
+import AppLayout from '@/app/components/AppLayout';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
@@ -142,8 +142,7 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
-        <Navbar />
+      <AppLayout>
         <div className="p-6">
           <div className="max-w-5xl mx-auto">
             <div className="flex justify-center items-center h-64">
@@ -154,14 +153,13 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
             </div>
           </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   if (error && !learningPath) {
     return (
-      <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
-        <Navbar />
+      <AppLayout>
         <div className="p-6">
           <div className="max-w-5xl mx-auto">
             <div className="flex flex-col items-center justify-center h-64 space-y-4">
@@ -177,14 +175,13 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
             </div>
           </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   if (!learningPath) {
     return (
-      <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
-        <Navbar />
+      <AppLayout>
         <div className="p-6">
           <div className="max-w-5xl mx-auto">
             <div className="flex flex-col items-center justify-center h-64 space-y-4">
@@ -200,13 +197,12 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
             </div>
           </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
-      <Navbar shareId={shareId} />
+    <AppLayout shareId={shareId}>
       <div className="max-w-5xl mx-auto p-6">
         <div className="mb-8 max-w-2xl mx-auto">
           <div className="flex justify-between items-center">
@@ -256,6 +252,6 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
           </form>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 } 
