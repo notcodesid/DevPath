@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { LearningPathInput } from './components/LearningPathInput';
 import Navbar from './components/navbar';
+import { useSession } from 'next-auth/react';
 
 export default function Home() {
+  const { status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [shareId, setShareId] = useState<string | undefined>(undefined);
 

@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   try {
-    const { title, steps } = await req.json();
+    const { title, steps, userId } = await req.json();
+    
+    // Get the session to verify the user
+    const session = await getServerSession(authOptions);
+    
+    // Verify that the userId matches the authenticated user or is undefined
+    const authenticatedUserId = session?.user?.id;
+    const finalUserId = userId && authenticatedUserId === userId ? userId : undefined;
 
     if (!title || !steps || !Array.isArray(steps)) {
       return NextResponse.json(
@@ -20,6 +27,7 @@ export async function POST(req: Request) {
         title,
         steps,
         description: `Learning path for ${title}`,
+        userId: finalUserId, // Associate with user if authenticated
       },
     });
 

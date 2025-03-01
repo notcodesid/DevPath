@@ -6,6 +6,7 @@ import { Loader2, Send } from 'lucide-react';
 import Link from 'next/link';
 import Navbar from '@/app/components/navbar';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 interface LearningStep {
   id: string;
@@ -26,6 +27,7 @@ interface LearningPath {
 
 export default function SharedPathPage({ params }: { params: { shareId: string } }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const shareId = params.shareId;
   
   const [learningPath, setLearningPath] = useState<LearningPath | null>(null);
@@ -120,6 +122,7 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
         body: JSON.stringify({
           title: input,
           steps: steps,
+          userId: session?.user?.id,
         }),
       });
 

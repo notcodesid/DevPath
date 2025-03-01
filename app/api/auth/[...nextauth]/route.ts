@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import { NextAuthOptions } from "next-auth";
 
 // Extend the session type to include credits
 declare module "next-auth" {
@@ -21,12 +22,19 @@ console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
 console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? `${process.env.GOOGLE_CLIENT_ID.substring(0, 5)}...` : 'undefined');
 console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? 'defined (masked)' : 'undefined');
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
     }),
   ],
   session: {
@@ -62,6 +70,8 @@ const handler = NextAuth({
     error: '/auth/error', // Add custom error page
   },
   debug: true, // Enable debug mode to see detailed error messages
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST }; 

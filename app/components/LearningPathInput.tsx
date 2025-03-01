@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 interface LearningStep {
   id: string;
@@ -20,6 +21,7 @@ interface LearningPathInputProps {
 
 export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: LearningPathInputProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +82,7 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
         body: JSON.stringify({
           title: input,
           steps: steps,
+          userId: session?.user?.id, // Include user ID if authenticated
         }),
       });
 

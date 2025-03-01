@@ -1,144 +1,109 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { redirect } from 'next/navigation';
-import { Navbar } from '../components/Navbar';
-import { useState, useEffect } from 'react';
-import { Timeline } from '../components/Timeline';
+import { useRouter } from 'next/navigation';
+import Navbar from '@/app/components/navbar';
+import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 
 interface LearningPath {
   id: string;
   title: string;
-  description: string;
-  steps: any;
+  shareId: string;
   createdAt: string;
 }
 
 export default function ProfilePage() {
-  // Always call hooks at the top level
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      // Only redirect on the client side
-      if (typeof window !== 'undefined') {
-        redirect('/auth/signin');
-      }
-    },
-  });
-  
-  const [mounted, setMounted] = useState(false);
-  const [learningPaths, setLearningPaths] = useState<LearningPath[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [paths, setPaths] = useState<LearningPath[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch user's learning paths
   useEffect(() => {
-    if (session?.user?.id && mounted) {
-      setIsLoading(true);
-      fetch(`/api/learning-paths?userId=${session.user.id}`)
-        .then(res => res.json())
-        .then(data => {
-          setLearningPaths(data);
-          setIsLoading(false);
-        })
-        .catch(err => {
-          console.error('Error fetching learning paths:', err);
-          setIsLoading(false);
-        });
+    // Redirect if not authenticated
+    if (status === 'unauthenticated') {
+      router.push('/');
     }
-  }, [session?.user?.id, mounted]);
 
-  // Don't render anything during SSR to prevent hydration errors
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-[#191a1a]">
-        <Navbar />
-        <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6">
-          <div className="flex justify-center items-center h-64">
-            <div className="h-12 w-12 border-t-2 border-b-2 border-[#dbdbd9]"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    // Fetch user's learning paths
+    if (status === 'authenticated') {
+      fetchUserPaths();
+    }
+  }, [status, router]);
 
-  if (status === 'loading') {
+  const fetchUserPaths = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/user-paths');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch learning paths');
+      }
+      
+      const data = await response.json();
+      setPaths(data.paths);
+    } catch (error) {
+      console.error('Error fetching paths:', error);
+      setError('Failed to load your learning paths. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (status === 'loading' || isLoading) {
     return (
-      <div className="min-h-screen bg-[#191a1a]">
+      <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
         <Navbar />
-        <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6">
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#dbdbd9]"></div>
-          </div>
+        <div className="flex flex-col items-center justify-center min-h-[80vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-[#dbdbd9]" />
+          <p className="mt-4">Loading your profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#191a1a]">
+    <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
       <Navbar />
-      <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6">
-        <div className="bg-[#202323] rounded-lg shadow-lg p-8">
-          <h1 className="text-2xl font-bold text-[#dbdbd9] mb-6">Your Profile</h1>
-          
-          <div className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <div className="text-[#dbdbd9]/70">Name:</div>
-              <div className="text-[#dbdbd9] font-medium">{session?.user.name}</div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="text-[#dbdbd9]/70">Email:</div>
-              <div className="text-[#dbdbd9] font-medium">{session?.user.email}</div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="text-[#dbdbd9]/70">Credits:</div>
-              <div className="text-[#dbdbd9] font-medium">{session?.user.credits}</div>
-            </div>
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <h1 className="text-3xl font-bold mb-8">Your Learning Paths</h1>
+        
+        {error && (
+          <div className="bg-red-900/20 border border-red-800 text-red-100 p-4 rounded-md mb-6">
+            {error}
           </div>
-          
-          <div className="mt-8 border-t border-[#dbdbd9]/10 pt-6">
-            <h2 className="text-xl font-semibold text-[#dbdbd9] mb-4">Your Learning Paths</h2>
-            
-            {isLoading ? (
-              <div className="flex justify-center items-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-[#dbdbd9]" />
-              </div>
-            ) : learningPaths.length > 0 ? (
-              <div className="space-y-4">
-                {learningPaths.map((path) => (
-                  <div 
-                    key={path.id} 
-                    className="p-4 bg-[#191a1a] rounded-md border border-[#dbdbd9]/10 hover:border-[#dbdbd9]/30 transition-colors cursor-pointer"
-                    onClick={() => setSelectedPath(selectedPath === path.id ? null : path.id)}
-                  >
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-medium text-[#dbdbd9]">{path.title}</h3>
-                      <span className="text-sm text-[#dbdbd9]/60">
-                        {new Date(path.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    
-                    {selectedPath === path.id && (
-                      <div className="mt-4">
-                        <Timeline steps={path.steps.steps} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[#dbdbd9]/70">You haven't created any learning paths yet.</p>
-            )}
+        )}
+        
+        {paths.length === 0 && !error ? (
+          <div className="bg-[#202323] p-6 rounded-lg text-center">
+            <p className="mb-4">You haven't created any learning paths yet.</p>
+            <Link 
+              href="/" 
+              className="inline-block bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-md transition-colors"
+            >
+              Create Your First Path
+            </Link>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {paths.map((path) => (
+              <div key={path.id} className="bg-[#202323] p-6 rounded-lg hover:bg-[#252828] transition-colors">
+                <h2 className="text-xl font-semibold mb-2 text-white">{path.title}</h2>
+                <p className="text-sm text-[#dbdbd9]/70 mb-4">
+                  Created on {new Date(path.createdAt).toLocaleDateString()}
+                </p>
+                <Link
+                  href={`/shared/${path.shareId}`}
+                  className="text-[#2563eb] hover:text-[#3b82f6] font-medium"
+                >
+                  View Path →
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
