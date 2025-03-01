@@ -8,7 +8,8 @@ export async function GET(
   { params }: { params: { shareId: string } }
 ) {
   try {
-    const { shareId } = params;
+    // Safely extract shareId from params
+    const shareId = params?.shareId;
 
     if (!shareId) {
       return NextResponse.json(

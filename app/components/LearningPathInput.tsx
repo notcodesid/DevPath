@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Send, Loader2, AlertCircle, Share2, Copy, Check } from 'lucide-react';
+import { Send, Loader2,  Check, Share2 } from 'lucide-react';
 import { Timeline } from './Timeline';
-import { useRouter } from 'next/navigation';
 
 interface LearningStep {
   id: string;
@@ -19,14 +18,12 @@ interface LearningPathInputProps {
 }
 
 export function LearningPathInput({ onPathGenerated }: LearningPathInputProps) {
-  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [generatedPath, setGeneratedPath] = useState<LearningStep[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   
   // Set mounted state after hydration
@@ -64,6 +61,9 @@ export function LearningPathInput({ onPathGenerated }: LearningPathInputProps) {
       
       setGeneratedPath(data.steps);
       onPathGenerated(data.steps);
+      
+      // Automatically save the learning path
+      await saveLearningPath(data.steps);
     } catch (error) {
       console.error('Error generating learning path:', error);
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
@@ -73,12 +73,7 @@ export function LearningPathInput({ onPathGenerated }: LearningPathInputProps) {
     }
   };
 
-  const handleSaveAndShare = async () => {
-    if (!generatedPath.length) return;
-    
-    setIsSaving(true);
-    setError(null);
-    
+  const saveLearningPath = async (steps: LearningStep[]) => {
     try {
       const response = await fetch('/api/save-path', {
         method: 'POST',
@@ -87,7 +82,7 @@ export function LearningPathInput({ onPathGenerated }: LearningPathInputProps) {
         },
         body: JSON.stringify({
           title: input,
-          steps: generatedPath,
+          steps: steps,
         }),
       });
 
@@ -100,9 +95,7 @@ export function LearningPathInput({ onPathGenerated }: LearningPathInputProps) {
       setShareId(data.shareId);
     } catch (error) {
       console.error('Error saving learning path:', error);
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
-    } finally {
-      setIsSaving(false);
+      // Don't show error to user for automatic saving
     }
   };
 
@@ -181,49 +174,26 @@ export function LearningPathInput({ onPathGenerated }: LearningPathInputProps) {
       
       {generatedPath.length > 0 && (
         <div className="mt-8">
-          <div className="flex justify-end mb-4">
-            {!shareId ? (
+          {shareId && (
+            <div className="flex justify-end mb-4">
               <button
-                onClick={handleSaveAndShare}
-                disabled={isSaving}
+                onClick={copyShareLink}
                 className="flex items-center gap-2 px-4 py-2 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-md transition-colors"
               >
-                {isSaving ? (
+                {copied ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Saving...</span>
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Copied!</span>
                   </>
                 ) : (
                   <>
                     <Share2 className="h-4 w-4" />
-                    <span>Save & Share</span>
+                    <span>Copy Share Link</span>
                   </>
                 )}
               </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <div className="px-3 py-2 bg-[#202323] text-[#dbdbd9] rounded-md">
-                  <span className="text-sm">{`${window.location.origin}/shared/${shareId}`}</span>
-                </div>
-                <button
-                  onClick={copyShareLink}
-                  className="flex items-center gap-2 px-3 py-2 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-md transition-colors"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="h-4 w-4 text-green-500" />
-                      <span>Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4" />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
           <Timeline steps={generatedPath} />
         </div>
       )}
