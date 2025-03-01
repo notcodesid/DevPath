@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Timeline } from '@/app/components/Timeline';
 import { Loader2, Send } from 'lucide-react';
 import Link from 'next/link';
+import Navbar from '@/app/components/navbar';
 
 interface LearningStep {
   id: string;
@@ -30,7 +31,6 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPath, setGeneratedPath] = useState<LearningStep[] | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [currentShareId, setCurrentShareId] = useState<string | null>(null);
 
@@ -66,10 +66,10 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
       }
     };
 
-    if (currentShareId) {
+    if (currentShareId && mounted) {
       fetchSharedPath();
     }
-  }, [currentShareId]);
+  }, [currentShareId, mounted]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,26 +137,17 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
     }
   };
 
-  const copyShareLink = () => {
-    if (!shareId) return;
-    
-    const shareUrl = `${window.location.origin}/shared/${shareId}`;
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#151718] text-[#dbdbd9] p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-center items-center h-64">
-            <div className="flex flex-col items-center space-y-2">
-              <Loader2 className="h-8 w-8 animate-spin text-[#dbdbd9]" />
-              <p className="text-[#dbdbd9]">Loading shared learning path...</p>
+      <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
+        <Navbar />
+        <div className="p-6">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex justify-center items-center h-64">
+              <div className="flex flex-col items-center space-y-2">
+                <Loader2 className="h-8 w-8 animate-spin text-[#dbdbd9]" />
+                <p className="text-[#dbdbd9]">Loading shared learning path...</p>
+              </div>
             </div>
           </div>
         </div>
@@ -166,18 +157,21 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
 
   if (error && !learningPath) {
     return (
-      <div className="min-h-screen bg-[#151718] text-[#dbdbd9] p-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col items-center justify-center h-64 space-y-4">
-            <div className="p-4 bg-red-900/20 border border-red-900/30 rounded-md max-w-md w-full">
-              <p className="text-red-400 text-center">{error}</p>
+      <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
+        <Navbar />
+        <div className="p-6">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col items-center justify-center h-64 space-y-4">
+              <div className="p-4 bg-red-900/20 border border-red-900/30 rounded-md max-w-md w-full">
+                <p className="text-red-400 text-center">{error}</p>
+              </div>
+              <Link 
+                href="/"
+                className="px-4 py-2 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-md transition-colors"
+              >
+                Return to Home
+              </Link>
             </div>
-            <Link 
-              href="/"
-              className="px-4 py-2 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-md transition-colors"
-            >
-              Return to Home
-            </Link>
           </div>
         </div>
       </div>
@@ -186,18 +180,21 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
 
   if (!learningPath) {
     return (
-      <div className="min-h-screen bg-[#151718] text-[#dbdbd9] p-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col items-center justify-center h-64 space-y-4">
-            <div className="p-4 bg-yellow-900/20 border border-yellow-900/30 rounded-md max-w-md w-full">
-              <p className="text-yellow-400 text-center">Learning path not found</p>
+      <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
+        <Navbar />
+        <div className="p-6">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col items-center justify-center h-64 space-y-4">
+              <div className="p-4 bg-yellow-900/20 border border-yellow-900/30 rounded-md max-w-md w-full">
+                <p className="text-yellow-400 text-center">Learning path not found</p>
+              </div>
+              <Link 
+                href="/"
+                className="px-4 py-2 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-md transition-colors"
+              >
+                Return to Home
+              </Link>
             </div>
-            <Link 
-              href="/"
-              className="px-4 py-2 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-md transition-colors"
-            >
-              Return to Home
-            </Link>
           </div>
         </div>
       </div>
@@ -205,17 +202,12 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
   }
 
   return (
-    <div className="min-h-screen bg-[#151718] text-[#dbdbd9] pb-24">
+    <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
+      <Navbar shareId={shareId || params.shareId} />
       <div className="max-w-5xl mx-auto p-6">
-        <div className="mb-8">
+        <div className="mb-8 max-w-2xl mx-auto">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-[#dbdbd9]">{learningPath.title}</h1>
-            <Link 
-              href="/"
-              className="px-4 py-2 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-md transition-colors"
-            >
-              Create Your Own
-            </Link>
+            <h1 className="text-2xl font-bold text-white">{learningPath.title}</h1>
           </div>
           <p className="text-[#dbdbd9]/70 mt-2">
             {learningPath.description || 'A personalized learning path'}
@@ -225,55 +217,49 @@ export default function SharedPathPage({ params }: { params: { shareId: string }
           </p>
         </div>
         
-        <Timeline steps={learningPath.steps} />
-        
-        {/* Display generated path if available */}
-        {generatedPath && (
-          <div className="mt-8 border-t border-[#dbdbd9]/10 pt-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-[#dbdbd9]">Your Generated Path</h2>
-              {shareId && (
-                <button
-                  onClick={copyShareLink}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-md transition-colors"
-                >
-                  {copied ? (
-                    <span>Copied!</span>
-                  ) : (
-                    <span>Copy Share Link</span>
-                  )}
-                </button>
-              )}
+        <div className="max-w-3xl mx-auto">
+          <Timeline steps={learningPath.steps} />
+          
+          {/* Display generated path if available */}
+          {generatedPath && (
+            <div className="mt-12 border-t border-[#dbdbd9]/10 pt-6">
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-white">Your Generated Path</h2>
+              </div>
+              <Timeline steps={generatedPath} />
             </div>
-            <Timeline steps={generatedPath} />
-          </div>
-        )}
+          )}
+        </div>
       </div>
       
       {/* Fixed input field at the bottom */}
       <div className="fixed bottom-0 left-0 right-0 bg-[#151718] border-t border-[#dbdbd9]/10 p-4 z-10">
-        <div className="max-w-5xl mx-auto">
-          <form onSubmit={handleSubmit} className="flex items-end gap-2">
-            <div className="flex-1">
-              <textarea
+        <div className="max-w-2xl mx-auto">
+          <form onSubmit={handleSubmit} className="w-full">
+            <div className="relative">
+              <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Describe what you want to learn (e.g., 'I want to learn Python for data science')"
-                className="w-full px-4 py-3 text-[#dbdbd9] bg-[#202323] border border-[#dbdbd9]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#dbdbd9]/30 placeholder-[#dbdbd9]/40 font-normal resize-none h-[60px] min-h-[60px]"
+                placeholder="Ask anything..."
+                className="w-full px-6 py-4 text-[#dbdbd9] bg-[#202323] border border-[#dbdbd9]/10 rounded-full focus:outline-none focus:ring-2 focus:ring-[#dbdbd9]/20 placeholder-[#dbdbd9]/40 font-normal h-[60px] shadow-lg"
                 disabled={isGenerating}
               />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                {isGenerating ? (
+                  <div className="mr-2">
+                    <Loader2 className="h-5 w-5 animate-spin text-[#dbdbd9]/70" />
+                  </div>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isGenerating || !input.trim()}
+                    className="p-2 text-[#dbdbd9] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-[#2a2e2e] hover:bg-[#3a3e3e] rounded-full h-10 w-10 flex items-center justify-center"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
-            <button
-              type="submit"
-              disabled={isGenerating || !input.trim()}
-              className="p-3 h-[60px] w-[60px] flex items-center justify-center text-[#dbdbd9] bg-[#202323] hover:bg-[#2a2e2e] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isGenerating ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Send className="h-5 w-5" />
-              )}
-            </button>
           </form>
         </div>
       </div>

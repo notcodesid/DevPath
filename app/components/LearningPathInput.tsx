@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Send, Loader2,  Check, Share2 } from 'lucide-react';
-import { Timeline } from './Timeline';
+import { Send, Loader2, Check, Share2 } from 'lucide-react';
 
 interface LearningStep {
   id: string;
@@ -114,87 +113,68 @@ export function LearningPathInput({ onPathGenerated }: LearningPathInputProps) {
   // Show a loading skeleton during SSR and initial client render
   if (!mounted) {
     return (
-      <div className="max-w-5xl mx-auto">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-32 bg-[#202323] rounded"></div>
-          <div className="h-32 bg-[#202323] rounded"></div>
+      <div className="w-full">
+        <div className="animate-pulse w-full">
+          <div className="h-14 bg-[#202323] rounded-full w-full"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex flex-col space-y-2">
-          <label htmlFor="learning-input" className="text-lg font-medium text-[#dbdbd9]">
-            What would you like to learn?
-          </label>
-          <p className="text-sm font-normal text-[#dbdbd9]/70 leading-relaxed">
-            Describe your learning goals and experience level, and we&apos;ll create a personalized learning path for you.
-          </p>
-          <div className="relative">
-            <textarea
-              id="learning-input"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="e.g., I want to learn React from scratch and build modern web applications..."
-              className="w-full h-32 px-4 py-2 text-[#dbdbd9] bg-[#202323] border border-[#dbdbd9]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#dbdbd9]/30 placeholder-[#dbdbd9]/40 font-normal"
-              disabled={isLoading}
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !input.trim()}
-              className="absolute bottom-3 right-3 p-2 text-[#dbdbd9] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Send className="h-5 w-5" />
-              )}
-            </button>
+    <div className="w-full">
+      <form onSubmit={handleSubmit} className="w-full">
+        <div className="relative">
+          <input
+            id="learning-input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask anything..."
+            className="w-full px-6 py-4 text-[#dbdbd9] bg-[#202323] border border-[#dbdbd9]/10 rounded-full focus:outline-none focus:ring-2 focus:ring-[#dbdbd9]/20 placeholder-[#dbdbd9]/40 font-normal h-[60px] shadow-lg"
+            disabled={isLoading}
+          />
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+            {isLoading ? (
+              <div className="mr-2">
+                <Loader2 className="h-5 w-5 animate-spin text-[#dbdbd9]/70" />
+              </div>
+            ) : (
+              <button
+                type="submit"
+                disabled={isLoading || !input.trim()}
+                className="p-2 text-[#dbdbd9] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-[#2a2e2e] hover:bg-[#3a3e3e] rounded-full h-10 w-10 flex items-center justify-center"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
       </form>
       
-      {isLoading && (
-        <div className="flex justify-center items-center mt-8">
-          <div className="flex flex-col items-center space-y-2">
-            <Loader2 className="h-8 w-8 animate-spin text-[#dbdbd9]" />
-            <p className="text-[#dbdbd9]">Generating your personalized learning path...</p>
-          </div>
-        </div>
-      )}
-      
       {error && (
-        <div className="mt-4 p-4 bg-red-900/20 border border-red-900/30 rounded-md">
+        <div className="mt-4 p-4 bg-red-900/20 border border-red-900/30 rounded-md w-full">
           <p className="text-red-400">{error}</p>
         </div>
       )}
       
-      {generatedPath.length > 0 && (
-        <div className="mt-8">
-          {shareId && (
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={copyShareLink}
-                className="flex items-center gap-2 px-4 py-2 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-md transition-colors"
-              >
-                {copied ? (
-                  <>
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="h-4 w-4" />
-                    <span>Copy Share Link</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-          <Timeline steps={generatedPath} />
+      {shareId && generatedPath.length > 0 && (
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={copyShareLink}
+            className="flex items-center gap-2 px-4 py-2 bg-[#202323] hover:bg-[#2a2e2e] text-[#dbdbd9] rounded-md transition-colors text-sm"
+          >
+            {copied ? (
+              <>
+                <Check className="h-4 w-4 text-green-500" />
+                <span>Copied!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="h-4 w-4" />
+                <span>Copy Share Link</span>
+              </>
+            )}
+          </button>
         </div>
       )}
     </div>

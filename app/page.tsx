@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { LearningPathInput } from "./components/LearningPathInput";
-import { Share2 } from 'lucide-react';
+import { useState } from 'react';
+import { LearningPathInput } from './components/LearningPathInput';
+import { Timeline } from './components/Timeline';
+import Navbar from './components/navbar';
 
 interface LearningStep {
   id: string;
@@ -14,56 +15,77 @@ interface LearningStep {
 }
 
 export default function Home() {
-  const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  
+  const [learningPath, setLearningPath] = useState<{
+    title: string;
+    description: string;
+    steps: LearningStep[];
+  }>({
+    title: '',
+    description: '',
+    steps: [],
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const handlePathGenerated = (steps: LearningStep[]) => {
-    // We can use this callback for analytics or other purposes in the future
-    console.log('Learning path generated with', steps.length, 'steps');
+    setLearningPath({
+      title: 'Your Learning Path',
+      description: 'A personalized path based on your interests',
+      steps,
+    });
+    setIsLoading(false);
   };
 
-  // Show a static version during SSR to prevent hydration errors
-  if (!mounted) {
-    return (
-      <main className="min-h-screen bg-[#191a1a]">
-        <div className="h-16 bg-[#202323] border-b border-[#dbdbd9]/10"></div>
-        <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6">
-          <div className="mb-16">
-            <div className="h-12 w-3/4 bg-[#202323] rounded"></div>
-            <div className="mt-4 h-6 w-1/2 bg-[#202323] rounded"></div>
-          </div>
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 w-32 bg-[#202323] rounded"></div>
-            <div className="h-32 bg-[#202323] rounded"></div>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="min-h-screen bg-[#191a1a]">
-      <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6">
-        <div className="mb-16">
-          <h1 className="text-4xl font-bold tracking-tight text-[#dbdbd9] sm:text-5xl">
-            Project-based learning
-          </h1>
-          <p className="mt-4 text-xl font-normal text-[#dbdbd9]/70">
-            Tell us what you want to learn, and we&apos;ll create a personalized learning path
+    <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
+      <Navbar />
+      <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+        <div className="w-full max-w-2xl mx-auto text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-4">What do you want to learn?</h1>
+          <p className="text-[#dbdbd9]/70 text-lg">
+            We&apos;ll create a personalized learning path for you
           </p>
-          <div className="mt-4 flex items-center gap-2 text-[#dbdbd9]/60">
-            <Share2 className="h-4 w-4" />
-            <span className="text-sm">
-              Now with sharing! Generate a path and share it with anyone via a unique link.
-            </span>
-          </div>
         </div>
 
-        <LearningPathInput onPathGenerated={handlePathGenerated} />
+        <div className="w-full max-w-2xl">
+          <LearningPathInput 
+            onPathGenerated={(steps) => {
+              setIsLoading(true);
+              handlePathGenerated(steps);
+            }} 
+          />
+        </div>
+
+        {isLoading ? (
+          <div className="mt-12 w-full max-w-2xl">
+            <div className="h-8 w-64 bg-[#202323] rounded-md animate-pulse mx-auto mb-6"></div>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-start gap-4">
+                  <div className="h-8 w-8 rounded-full bg-[#202323] animate-pulse"></div>
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 bg-[#202323] rounded animate-pulse w-3/4"></div>
+                    <div className="h-4 bg-[#202323] rounded animate-pulse w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : error ? (
+          <div className="mt-12 w-full max-w-2xl p-4 bg-red-500/10 border border-red-500/30 rounded-md text-red-200">
+            <p className="font-medium">Error generating learning path</p>
+            <p className="text-sm mt-1 text-red-200/70">{error}</p>
+          </div>
+        ) : learningPath.steps.length > 0 ? (
+          <div className="mt-12 w-full max-w-3xl">
+            <div className="mb-6 text-center">
+              <h2 className="text-2xl font-semibold text-white">{learningPath.title}</h2>
+              <p className="text-[#dbdbd9]/70 mt-2">{learningPath.description}</p>
+            </div>
+            <Timeline steps={learningPath.steps} />
+          </div>
+        ) : null}
       </div>
-    </main>
+    </div>
   );
 }
