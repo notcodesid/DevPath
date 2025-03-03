@@ -1,11 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { Copy, Check, LogIn, Menu, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { useSession, signIn } from 'next-auth/react';
-import Image from 'next/image';
-import Logo from "@/public/code-merge.png";
 
 interface NavbarProps {
   shareId?: string;
@@ -27,9 +24,9 @@ export default function Navbar({ shareId, toggleSidebar, desktopSidebarOpen = tr
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 border-b border-[#202323] bg-[#151718] z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
+    <header className="sticky top-0 z-40 w-full border-b border-[#202323] bg-[#151718]">
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             {/* Mobile sidebar toggle button */}
             <button
@@ -47,16 +44,13 @@ export default function Navbar({ shareId, toggleSidebar, desktopSidebarOpen = tr
               aria-label={desktopSidebarOpen ? "Close sidebar" : "Open sidebar"}
             >
               {desktopSidebarOpen ? (
-                <PanelLeftClose className="h-5 w-5" />
+                <PanelLeftClose className="h-5 w-5 transform transition-transform duration-300" />
               ) : (
-                <PanelLeft className="h-5 w-5" />
+                <PanelLeft className="h-5 w-5 transform transition-transform duration-300" />
               )}
             </button>
             
-            <Link href="/" className="text-xl font-bold text-white flex items-center gap-2">
-              <Image src={Logo} alt="DevPath" width={25} height={25} />
-              <span className="hidden sm:inline">DevPath</span>
-            </Link>
+           
           </div>
           
           <div className="flex items-center space-x-4">

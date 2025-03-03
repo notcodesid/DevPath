@@ -58,16 +58,40 @@ export default function AppLayout({ children, shareId }: AppLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#151718] text-[#dbdbd9]">
+    <div className="relative min-h-screen bg-[#151718] text-[#dbdbd9]">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden" 
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        desktopOpen={desktopSidebarOpen}
-        toggleSidebar={toggleSidebar} 
-      />
-      
-      {/* Main content */}
-      <div className={`transition-all duration-300 ${desktopSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
+      <div 
+        className={`
+          fixed inset-y-0 left-0 z-50 
+          w-64 bg-[#202323] border-r border-[#303030]
+          transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${desktopSidebarOpen ? 'lg:translate-x-0' : 'lg:-translate-x-full'}
+        `}
+      >
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          desktopOpen={desktopSidebarOpen}
+          toggleSidebar={toggleSidebar} 
+        />
+      </div>
+
+      {/* Main content area */}
+      <div 
+        className={`
+          min-h-screen
+          transition-all duration-300 ease-in-out
+          ${desktopSidebarOpen ? 'lg:pl-64' : 'lg:pl-0'}
+        `}
+      >
         {/* Navbar */}
         <Navbar 
           shareId={shareId} 
@@ -76,7 +100,7 @@ export default function AppLayout({ children, shareId }: AppLayoutProps) {
         />
         
         {/* Page content */}
-        <main className="pt-16 pb-20">
+        <main className="p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>
