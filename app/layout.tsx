@@ -2,16 +2,14 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { homeMetadata } from './metadata';
 
 const inter = Inter({ 
   subsets: ["latin"],
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: "DevPath - Project-based Learning",
-  description: "Learn technologies through interactive, project-based learning paths",
-};
+export const metadata: Metadata = homeMetadata;
 
 export default function RootLayout({
   children,
