@@ -3,24 +3,20 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: Request,
-  { params }: { params: { shareId: string } }
+  { params }: { params: Promise<{ shareId: string }> }
 ) {
+  const shareId = (await params).shareId;
+
+  if (!shareId) {
+    return NextResponse.json(
+      { error: 'Share ID is required' },
+      { status: 400 }
+    );
+  }
+
   try {
-    // Safely extract shareId from params
-    const shareId = params?.shareId;
-
-    if (!shareId) {
-      return NextResponse.json(
-        { error: 'Share ID is required' },
-        { status: 400 }
-      );
-    }
-
-    // Find the learning path by share ID
     const learningPath = await prisma.learningPath.findUnique({
-      where: {
-        shareId,
-      },
+      where: { shareId }
     });
 
     if (!learningPath) {

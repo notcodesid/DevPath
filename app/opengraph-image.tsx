@@ -5,7 +5,6 @@ export const contentType = 'image/png';
 export const size = { width: 1200, height: 630 };
 
 export default function Image() {
-  const title = 'DevPath - Create Personalized Learning Paths';
   
   return new ImageResponse(
     (

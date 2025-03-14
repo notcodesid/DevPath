@@ -15,7 +15,7 @@ interface LearningPath {
 }
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const {  status } = useSession();
   const router = useRouter();
   const [paths, setPaths] = useState<LearningPath[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,7 +76,7 @@ export default function ProfilePage() {
         
         {paths.length === 0 && !error ? (
           <div className="bg-[#202323] p-6 rounded-lg text-center">
-            <p className="mb-4">You haven't created any learning paths yet.</p>
+            <p className="mb-4">You haven&apos;t created any learning paths yet.</p>
             <Link 
               href="/" 
               className="inline-block bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-md transition-colors"

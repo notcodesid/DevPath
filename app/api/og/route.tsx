@@ -109,9 +109,10 @@ export async function GET(req: NextRequest) {
         },
       },
     );
-  } catch (e: any) {
-    console.log(`${e.message}`);
-    return new Response(`Failed to generate the image: ${e.message}`, {
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
+    console.log(`${errorMessage}`);
+    return new Response(`Failed to generate the image: ${errorMessage}`, {
       status: 500,
     });
   }

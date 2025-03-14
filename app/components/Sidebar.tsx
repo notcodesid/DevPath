@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import {  LogOut } from 'lucide-react';
+import { LogOut, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
 import Image from 'next/image';
 import Logo from "@/public/code-merge.png";
-
 
 interface LearningPath {
   id: string;
@@ -16,7 +15,13 @@ interface LearningPath {
   createdAt: string;
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  desktopOpen: boolean;
+  toggleSidebar: () => void;
+}
+
+export default function Sidebar({ isOpen, desktopOpen, toggleSidebar }: SidebarProps) {
   const { data: session, status } = useSession();
   const [paths, setPaths] = useState<LearningPath[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,11 +64,18 @@ export default function Sidebar() {
     <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-[#303030] flex justify-between items-center">
-      <Link href="/" className="text-xl font-bold text-white flex items-center gap-2">
-              <Image src={Logo} alt="DevPath" width={25} height={25} />
-              <span className="hidden sm:inline">DevPath</span>
-            </Link>        {/* Toggle button inside sidebar */}
-       
+        <Link href="/" className="text-xl font-bold text-white flex items-center gap-2">
+          <Image src={Logo} alt="DevPath" width={25} height={25} />
+          <span className={`${isOpen ? 'inline' : 'hidden'} sm:inline`}>DevPath</span>
+        </Link>
+        {/* Toggle button */}
+        <button
+          onClick={toggleSidebar}
+          className="p-2 rounded-md hover:bg-[#303030] transition-colors"
+          aria-label={desktopOpen ? 'Close sidebar' : 'Open sidebar'}
+        >
+          <ChevronLeft className={`h-5 w-5 transition-transform ${!desktopOpen ? 'rotate-180' : ''}`} />
+        </button>
       </div>
 
       {/* Learning paths list - flex-grow to push profile to bottom */}
@@ -85,9 +97,13 @@ export default function Sidebar() {
                     key={path.id} 
                     href={`/shared/${path.shareId}`}
                     className="block px-4 py-2 text-[#dbdbd9] hover:bg-[#252828] transition-colors"
+                    onClick={() => {
+                      if (window.innerWidth < 1024) {
+                        toggleSidebar();
+                      }
+                    }}
                   >
                     <div className="font-medium">{path.title}</div>
-                   
                   </Link>
                 ))
               ) : (
@@ -128,7 +144,6 @@ export default function Sidebar() {
                 <LogOut className="h-4 w-4" />
                 <span>Sign Out</span>
               </button>
-  
             </div>
           </div>
         ) : (
