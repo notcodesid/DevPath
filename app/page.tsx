@@ -24,8 +24,11 @@ export default function Home() {
           <>
             <div className="w-full max-w-2xl mx-auto text-center mb-8">
               <h1 className="text-4xl font-bold text-white mb-4">What do you want to learn?</h1>
-              <p className="text-[#dbdbd9]/70 text-lg">
+              <p className="text-[#dbdbd9]/70 text-lg mb-2">
                 We&apos;ll create a personalized learning path for you
+              </p>
+              <p className="text-[#dbdbd9]/50 text-sm">
+                No sign-up required - just ask and get your roadmap instantly
               </p>
             </div>
 

@@ -82,7 +82,7 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
         body: JSON.stringify({
           title: input,
           steps: steps,
-          userId: session?.user?.id, // Include user ID if authenticated
+          userId: session?.user?.id, // Will be undefined for anonymous users
         }),
       });
 

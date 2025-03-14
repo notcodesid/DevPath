@@ -7,10 +7,11 @@ export async function POST(req: Request) {
   try {
     const { title, steps, userId } = await req.json();
     
-    // Get the session to verify the user
+    // Get the session to verify the user, but this is optional
+    // Users can generate and save paths without authentication
     const session = await getServerSession(authOptions);
     
-    // Verify that the userId matches the authenticated user or is undefined
+    // Verify that the userId matches the authenticated user or is undefined for anonymous users
     const authenticatedUserId = session?.user?.id;
     const finalUserId = userId && authenticatedUserId === userId ? userId : undefined;
 
@@ -22,12 +23,13 @@ export async function POST(req: Request) {
     }
 
     // Create a new learning path with a share ID
+    // If user is not authenticated, the path will be saved without a userId
     const learningPath = await prisma.learningPath.create({
       data: {
         title,
         steps,
         description: `Learning path for ${title}`,
-        userId: finalUserId, // Associate with user if authenticated
+        userId: finalUserId, // Will be undefined for anonymous users
       },
     });
 
