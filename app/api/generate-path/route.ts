@@ -1,5 +1,14 @@
 import { NextResponse } from 'next/server';
 
+// Define interface for the learning path step
+interface LearningStep {
+  id: string;
+  title: string;
+  duration: string;
+  description: string;
+  subSteps: string[];
+}
+
 const apiKey = process.env.GEMINI_API_KEY;
 console.log('Gemini API Key (masked):', apiKey ? `${apiKey.substring(0, 3)}...${apiKey.substring(apiKey.length - 3)}` : 'undefined');
 const FETCH_TIMEOUT = 15000; // Reduced to 15 seconds
@@ -58,7 +67,7 @@ export async function POST(req: Request) {
     const systemPrompt = `Create a practical learning path with 4-6 steps. For each step include:
 
 1. A clear title
-2. Duration in hours (single number between 4-20)
+2. Duration in hours (single number followed by the word "hours", e.g., "4 hours", "10 hours")
 3. Brief description
 4. 2-3 learning resources with markdown links formatted as: "Resource: [Title](URL) - Brief description"
 5. 1-2 practice exercises formatted as: "Practice exercise: Description"
@@ -133,7 +142,7 @@ Make it practical and achievable.`;
         }
 
         // Ensure each step has required fields
-        generatedPath.steps = generatedPath.steps.map((step: any, index: number) => ({
+        generatedPath.steps = generatedPath.steps.map((step: Partial<LearningStep>, index: number) => ({
           id: step.id || String(index + 1),
           title: step.title || 'Untitled Step',
           duration: step.duration || '4 hours',

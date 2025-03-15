@@ -40,7 +40,13 @@ const formatSubStep = (subStep: string) => {
 
 // Function to extract the maximum hour value from a duration string
 const getMaxHours = (duration: string): number => {
-  // Try to extract numbers from the duration string
+  // First, try to extract just a number (e.g., "4 hours" or "10 hours")
+  const simpleMatch = duration.match(/^(\d+)\s*hours?$/i);
+  if (simpleMatch) {
+    return parseInt(simpleMatch[1]);
+  }
+  
+  // Try to extract numbers from the duration string with more complex patterns
   const hourMatches = duration.match(/(\d+)[-\s]*(\d+)?\s*hours?/i);
   const dayMatches = duration.match(/(\d+)[-\s]*(\d+)?\s*days?/i);
   const weekMatches = duration.match(/(\d+)[-\s]*(\d+)?\s*weeks?/i);
@@ -56,6 +62,12 @@ const getMaxHours = (duration: string): number => {
     // Convert weeks to hours (assuming 4 hours per day, 5 days per week)
     const maxWeeks = weekMatches[2] ? parseInt(weekMatches[2]) : parseInt(weekMatches[1]);
     return maxWeeks * 4 * 5;
+  }
+  
+  // Try to extract just a number as a last resort
+  const justNumber = duration.match(/(\d+)/);
+  if (justNumber) {
+    return parseInt(justNumber[1]);
   }
   
   // Default fallback
