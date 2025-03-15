@@ -15,7 +15,7 @@ interface LearningStep {
 }
 
 interface LearningPathInputProps {
-  onPathGenerated: () => void;
+  onPathGenerated: (steps: LearningStep[]) => void;
   onShareIdGenerated?: (shareId: string) => void;
 }
 
@@ -26,11 +26,35 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 2;
   
-  // Set mounted state after hydration
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const generatePath = async (): Promise<{ steps: LearningStep[] }> => {
+    const response = await fetch('/api/generate-path', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt: input }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to generate learning path');
+    }
+
+    const data = await response.json();
+    
+    if (!data.steps || !Array.isArray(data.steps)) {
+      throw new Error('Invalid response format');
+    }
+
+    return data;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,33 +64,48 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
     setError(null);
     
     try {
-      const response = await fetch('/api/generate-path', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt: input }),
-      });
+      let data;
+      let currentRetry = 0;
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate learning path');
+      while (currentRetry <= retryCount) {
+        try {
+          data = await generatePath();
+          break;
+        } catch (error) {
+          if (currentRetry === retryCount) {
+            throw error;
+          }
+          currentRetry++;
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, currentRetry) * 1000));
+        }
       }
 
-      const data = await response.json();
-      
-      if (!data.steps || !Array.isArray(data.steps)) {
-        throw new Error('Invalid response format');
+      if (!data) {
+        throw new Error('Failed to generate learning path after retries');
       }
       
-      // Call onPathGenerated to update loading state
-      onPathGenerated();
+      // Call onPathGenerated with the generated steps
+      onPathGenerated(data.steps);
       
-      // Automatically save the learning path and redirect
-      await saveLearningPath(data.steps);
+      // Only save path if user is authenticated
+      if (session?.user) {
+        await saveLearningPath(data.steps);
+      }
     } catch (error) {
       console.error('Error generating learning path:', error);
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      
+      if (errorMessage.includes('timeout') || errorMessage.includes('abort')) {
+        setError('The request took too long. Please try again with a more specific query.');
+      } else {
+        setError(errorMessage);
+      }
+
+      // Increment retry count if we haven't reached max retries
+      if (retryCount < MAX_RETRIES) {
+        setRetryCount(prev => prev + 1);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +121,7 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
         body: JSON.stringify({
           title: input,
           steps: steps,
-          userId: session?.user?.id, // Will be undefined for anonymous users
+          userId: session?.user?.id,
         }),
       });
 
@@ -93,16 +132,14 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
 
       const data = await response.json();
       
-      // Call onShareIdGenerated to update the shareId state in the parent component
       if (onShareIdGenerated) {
         onShareIdGenerated(data.shareId);
       }
       
-      // Redirect to the shared path page
       router.push(`/shared/${data.shareId}`);
     } catch (error) {
       console.error('Error saving learning path:', error);
-      // Don't show error to user for automatic saving
+      setError('Failed to save the learning path. Please try again.');
     }
   };
 
@@ -150,6 +187,11 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
       {error && (
         <div className="mt-4 p-4 bg-red-900/20 border border-red-900/30 rounded-md w-full">
           <p className="text-red-400">{error}</p>
+          {retryCount > 0 && retryCount < MAX_RETRIES && (
+            <p className="text-red-400 mt-2">
+              Retrying... Attempt {retryCount + 1} of {MAX_RETRIES + 1}
+            </p>
+          )}
         </div>
       )}
     </div>
