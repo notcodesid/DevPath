@@ -5,12 +5,22 @@ import { LearningPathInput } from './components/LearningPathInput';
 import { Timeline } from './components/Timeline';
 import AppLayout from './components/AppLayout';
 
+interface LearningStep {
+  id: string;
+  title: string;
+  duration: string;
+  description: string;
+  subSteps: string[];
+}
+
 export default function Home() {
   const [generatedPath, setGeneratedPath] = useState(false);
   const [shareId, setShareId] = useState<string | null>(null);
+  const [steps, setSteps] = useState<LearningStep[]>([]);
 
-  const handlePathGenerated = () => {
+  const handlePathGenerated = (generatedSteps: LearningStep[]) => {
     setGeneratedPath(true);
+    setSteps(generatedSteps);
   };
 
   const handleShareIdGenerated = (id: string) => {
@@ -41,7 +51,7 @@ export default function Home() {
           </>
         ) : (
           <div className="w-full max-w-4xl">
-            <Timeline steps={[]} />
+            <Timeline steps={steps} />
           </div>
         )}
       </div>
