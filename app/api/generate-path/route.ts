@@ -1,9 +1,51 @@
 import { NextResponse } from 'next/server';
 
-// Initialize Gemini API client
 const apiKey = process.env.GEMINI_API_KEY;
 console.log('Gemini API Key (masked):', apiKey ? `${apiKey.substring(0, 3)}...${apiKey.substring(apiKey.length - 3)}` : 'undefined');
+const FETCH_TIMEOUT = 15000; // Reduced to 15 seconds
 
+/**
+ * The `fetchWithTimeout` function in TypeScript allows fetching data from a URL with a specified
+ * timeout duration.
+ * @param {string} url - The `url` parameter in the `fetchWithTimeout` function is a string
+ * representing the URL from which you want to fetch data.
+ * @param {RequestInit} options - The `options` parameter in the `fetchWithTimeout` function represents
+ * the configuration options for the fetch request. These options can include properties like `method`,
+ * `headers`, `body`, `credentials`, `mode`, `cache`, `redirect`, and more. By spreading `...options`
+ * in the
+ * @returns The `fetchWithTimeout` function returns a Promise that resolves to the response from the
+ * `fetch` request made to the specified URL with the provided options. If the request times out due to
+ * the specified timeout duration, an error will be thrown.
+ */
+const fetchWithTimeout = async (url: string, options: RequestInit) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+};
+
+/**
+ * The function POST asynchronously generates a detailed learning path based on user input by utilizing
+ * the Gemini API and returns it in a specific JSON format.
+ * @param {Request} req - The `POST` function you provided is an asynchronous function that handles a
+ * POST request. It takes a `Request` object (`req`) as a parameter. Within the function, it processes
+ * the request data, constructs a prompt based on the request, sends a request to the Gemini API with
+ * the prompt,
+ * @returns The `POST` function is returning the generated learning path in JSON format. The learning
+ * path includes steps with titles, durations, descriptions, and substeps that contain specific tasks,
+ * resources, practice exercises, and project components. The function handles errors by returning a
+ * JSON object with an error message if there was an issue generating the learning path.
+ */
 export async function POST(req: Request) {
   try {
     const { prompt } = await req.json();
@@ -12,69 +54,36 @@ export async function POST(req: Request) {
       throw new Error('Gemini API key is not configured');
     }
 
-    // Create the system prompt and user prompt
-    const systemPrompt = `You are an expert curriculum designer specializing in project-based learning for technology topics. 
-          
-Your task is to create a detailed, practical learning path based on the user's request. Follow these guidelines carefully:
+    // Changed the system prompt to be more concise 
+    const systemPrompt = `Create a practical learning path with 4-6 steps. For each step include:
 
-TIME ESTIMATES:
-- For each step, provide a realistic estimate of how many hours that specific step will take to complete
-- Use single numbers (not ranges) like: 4, 6, 8, 10, 15, 20 hours
-- Assume the learner spends 4 hours per day on learning
-- For specific topics (e.g., "React hooks"), use smaller numbers (e.g., 4-8 hours per step)
-- For broader topics (e.g., "React"), use larger numbers (e.g., 10-20 hours per step)
-- Be realistic about time commitments for each learning step
-- The frontend will display these as cumulative hours, so each step should only include its own hours
+1. A clear title
+2. Duration in hours (single number between 4-20)
+3. Brief description
+4. 2-3 learning resources with markdown links formatted as: "Resource: [Title](URL) - Brief description"
+5. 1-2 practice exercises formatted as: "Practice exercise: Description"
 
-CONTENT STRUCTURE:
-- Start with fundamentals before moving to advanced topics
-- Each step should build on previous knowledge
-- Focus on hands-on projects and practical applications
-- Include specific, verified resources (documentation, tutorials, courses)
-- Emphasize modern best practices and industry standards
-
-RESOURCE GUIDELINES:
-- IMPORTANT: For EACH step, include at least 2-3 specific learning resources with proper markdown links
-- Format resources exactly as: "Resource: [Title](URL) - Brief description of what this resource covers"
-- Only include links that are likely to be valid and maintained
-- Prefer official documentation, well-known platforms, and reputable sources
-- For each resource, briefly explain what the learner will gain from it
-- Include a mix of reading materials, videos, and hands-on exercises
-
-CODE EXAMPLES GUIDELINES:
-- IMPORTANT: For EACH step, include at least 1-2 practice exercises or project components
-- Format practice exercises exactly as: "Practice exercise: Description of what to build or implement"
-- Format project components exactly as: "Project component: How this fits into the overall learning project"
-- Be specific about what the learner should build or implement
-- Include clear instructions and expected outcomes
-- Suggest tools, libraries, or frameworks to use
-
-Return your response in the following JSON format:
+Return as JSON:
 {
   "steps": [
     {
       "id": "1",
-      "title": "Clear, concise step title",
+      "title": "Step title",
       "duration": "X hours",
-      "description": "Detailed explanation of what will be learned and why it's important",
+      "description": "What will be learned",
       "subSteps": [
-        "Specific task or concept to learn with clear instructions",
-        "Resource: [Title](URL) - Brief description of what this resource covers",
-        "Resource: [Another Title](URL) - Brief description of what this resource covers",
-        "Practice exercise: Description of what to build or implement",
-        "Project component: How this fits into the overall learning project"
+        "Resource: [Title](URL) - Description",
+        "Practice exercise: Description"
       ]
     }
   ]
 }
 
-Include 4-6 main steps with 4-6 substeps each. Make the learning path comprehensive but achievable.`;
+Make it practical and achievable.`;
 
-    // Combine system prompt and user prompt
     const fullPrompt = `${systemPrompt}\n\nUser request: ${prompt}`;
 
-    // Make direct fetch request to Gemini API
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
@@ -92,8 +101,10 @@ Include 4-6 main steps with 4-6 substeps each. Make the learning path comprehens
             }
           ],
           generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 8192
+            temperature: 0.5, // Reduced for more focused responses
+            maxOutputTokens: 2048, // Reduced for faster generation
+            topP: 0.8, // Added for more focused responses
+            topK: 40 // Added for more focused responses
           }
         }),
       }
@@ -109,28 +120,44 @@ Include 4-6 main steps with 4-6 substeps each. Make the learning path comprehens
     const text = data.candidates[0].content.parts[0].text;
 
     // Parse the JSON from the response
-    // Find JSON content between curly braces
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     let generatedPath;
     
     if (jsonMatch) {
       try {
         generatedPath = JSON.parse(jsonMatch[0]);
+        
+        // Validate and ensure minimum required structure
+        if (!generatedPath?.steps?.length) {
+          throw new Error('Invalid learning path structure');
+        }
+
+        // Ensure each step has required fields
+        generatedPath.steps = generatedPath.steps.map((step: any, index: number) => ({
+          id: step.id || String(index + 1),
+          title: step.title || 'Untitled Step',
+          duration: step.duration || '4 hours',
+          description: step.description || 'No description provided',
+          subSteps: Array.isArray(step.subSteps) ? step.subSteps : []
+        }));
+
       } catch (e) {
         console.error('Error parsing JSON from Gemini response:', e);
-        generatedPath = { steps: [] };
+        throw new Error('Failed to parse learning path data');
       }
     } else {
-      console.error('No JSON found in Gemini response');
-      generatedPath = { steps: [] };
+      throw new Error('Invalid response format from AI model');
     }
 
     return NextResponse.json(generatedPath);
   } catch (error) {
     console.error('Error generating learning path:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    const status = error instanceof Error && error.message.includes('abort') ? 504 : 500;
+    
     return NextResponse.json(
-      { error: 'Failed to generate learning path' },
-      { status: 500 }
+      { error: errorMessage },
+      { status }
     );
   }
 } 
