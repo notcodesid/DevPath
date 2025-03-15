@@ -219,27 +219,27 @@ export function Timeline({ steps }: TimelineProps) {
   return (
     <div className="relative max-w-5xl mx-auto py-8">
       {/* Vertical line */}
-      <div className="absolute left-[120px] top-0 bottom-0 w-0.5 bg-[#dbdbd9]/20" />
-      
+      <div className="absolute left-[10px] sm:left-[120px] top-0 bottom-0 w-0.5 bg-[#dbdbd9]/20" />
+
       {normalizedSteps.map((step) => {
         return (
           <div key={step.id} className="relative mb-10">
             <div className="flex items-start">
               {/* Duration on the left */}
-              <div className="w-[120px] pr-6 text-right">
+              <div className="w-[120px] pr-6 text-right hidden sm:block">
                 <div className="text-sm font-medium text-[#dbdbd9]">
                   {step.duration}
                 </div>
               </div>
-              
+
               {/* Circle indicator */}
-              <div className="absolute left-[120px] transform -translate-x-1/2 mt-1.5">
+              <div className="absolute left-[10px] sm:left-[120px] transform -translate-x-1/2 mt-1.5">
                 <div className={cn(
                   "w-4 h-4 rounded-full border-2 border-[#dbdbd9]",
                   expandedSteps.has(step.id) ? "bg-[#dbdbd9]" : "bg-[#191a1a]"
                 )} />
               </div>
-              
+
               {/* Content on the right */}
               <div className="flex-1 pl-8">
                 <Collapsible>
@@ -247,7 +247,15 @@ export function Timeline({ steps }: TimelineProps) {
                     onClick={() => toggleStep(step.id)}
                     className="flex items-center space-x-2 text-lg font-semibold tracking-tight text-[#dbdbd9] hover:text-white w-full text-left"
                   >
-                    <span>{step.title}</span>
+                    <div className="flex flex-col">
+                      {/* Duration on the top */}
+                      <div className="w-[120px] pr-6 sm:hidden block">
+                        <div className="text-sm font-medium text-[#dbdbd9]">
+                          {step.duration}
+                        </div>
+                      </div>
+                      <span>{step.title}</span>
+                    </div>
                     {expandedSteps.has(step.id) ? (
                       <ChevronUp className="h-5 w-5 ml-2" />
                     ) : (

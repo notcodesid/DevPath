@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { LearningPathInput } from './components/LearningPathInput';
-import { Timeline } from './components/Timeline';
-import AppLayout from './components/AppLayout';
+import { useState } from "react";
+import { LearningPathInput } from "./components/LearningPathInput";
+import { Timeline } from "./components/Timeline";
+import AppLayout from "./components/AppLayout";
 
 interface LearningStep {
   id: string;
@@ -50,7 +50,7 @@ export default function Home() {
             </div>
           </>
         ) : (
-          <div className="w-full max-w-4xl">
+          <div className="sm:w-full max-w-3xl sm:max-w-4xl">
             <Timeline steps={steps} />
           </div>
         )}
