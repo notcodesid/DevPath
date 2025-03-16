@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSession, signOut } from 'next-auth/react';
-import { LogOut, ChevronLeft } from 'lucide-react';
-import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
-import Image from 'next/image';
+import { useState, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { LogOut, ChevronLeft } from "lucide-react";
+import Link from "next/link";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/app/components/ui/avatar";
+import Image from "next/image";
 import Logo from "@/public/code-merge.png";
+import { filterUtilityClasses } from "../utils/filterUtilityClasses";
+import { useToggleTheme } from "../hooks/useToggleTheme";
 
 interface LearningPath {
   id: string;
@@ -21,24 +27,28 @@ interface SidebarProps {
   toggleSidebar: () => void;
 }
 
-export default function Sidebar({ isOpen, desktopOpen, toggleSidebar }: SidebarProps) {
+export default function Sidebar({
+  isOpen,
+  desktopOpen,
+  toggleSidebar,
+}: SidebarProps) {
   const { data: session, status } = useSession();
   const [paths, setPaths] = useState<LearningPath[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Get user's initials for avatar fallback
-  const getInitials = (name: string = '') => {
+  const getInitials = (name: string = "") => {
     return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
       .toUpperCase()
       .substring(0, 2);
   };
 
   // Fetch user's learning paths
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (status === "authenticated") {
       fetchUserPaths();
     } else {
       setIsLoading(false);
@@ -48,40 +58,62 @@ export default function Sidebar({ isOpen, desktopOpen, toggleSidebar }: SidebarP
   const fetchUserPaths = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/user-paths');
+      const response = await fetch("/api/user-paths");
       if (response.ok) {
         const data = await response.json();
         setPaths(data.paths || []);
       }
     } catch (error) {
-      console.error('Error fetching user paths:', error);
+      console.error("Error fetching user paths:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const { theme } = useToggleTheme();
+
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-[#303030] flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold text-white flex items-center gap-2">
+      <div
+        className={`${filterUtilityClasses(
+          "dark:border-[#303030] border-gray-200",
+          theme
+        )} p-4 border-b  flex justify-between items-center`}
+      >
+        <Link
+          href="/"
+          className={`text-xl font-bold ${filterUtilityClasses(
+            "dark:text-white text-black",
+            theme
+          )} flex items-center gap-2`}
+        >
           <Image src={Logo} alt="DevPath" width={25} height={25} />
-          <span className={`${isOpen ? 'inline' : 'hidden'} sm:inline`}>DevPath</span>
+          <span className={`${isOpen ? "inline" : "hidden"} sm:inline`}>
+            DevPath
+          </span>
         </Link>
         {/* Toggle button */}
         <button
           onClick={toggleSidebar}
-          className="p-2 rounded-md hover:bg-[#303030] transition-colors"
-          aria-label={desktopOpen ? 'Close sidebar' : 'Open sidebar'}
+          className={`p-2 rounded-md  transition-colors ${filterUtilityClasses(
+            "dark:hover:bg-[#303030] hover:bg-gray-200",
+            theme
+          )}`}
+          aria-label={desktopOpen ? "Close sidebar" : "Open sidebar"}
         >
-          <ChevronLeft className={`h-5 w-5 transition-transform ${!desktopOpen ? 'rotate-180' : ''}`} />
+          <ChevronLeft
+            className={`h-5 w-5 transition-transform ${
+              !desktopOpen ? "rotate-180" : ""
+            } ${filterUtilityClasses("dark:text-white text-black", theme)}`}
+          />
         </button>
       </div>
 
       {/* Learning paths list - flex-grow to push profile to bottom */}
       <div className="flex-grow overflow-y-auto py-2">
         <div className="space-y-1">
-          {status === 'authenticated' ? (
+          {status === "authenticated" ? (
             <>
               {isLoading ? (
                 <div className="px-4 py-2">
@@ -92,11 +124,14 @@ export default function Sidebar({ isOpen, desktopOpen, toggleSidebar }: SidebarP
                   </div>
                 </div>
               ) : paths.length > 0 ? (
-                paths.map(path => (
-                  <Link 
-                    key={path.id} 
+                paths.map((path) => (
+                  <Link
+                    key={path.id}
                     href={`/shared/${path.shareId}`}
-                    className="block px-4 py-2 text-[#dbdbd9] hover:bg-[#252828] transition-colors"
+                    className={`block px-4 py-2 ${filterUtilityClasses(
+                      "dark:text-[#dbdbd9] text-gray-950 dark:hover:bg-[#252828] hover:bg-gray-200",
+                      theme
+                    )} transition-colors`}
                     onClick={() => {
                       if (window.innerWidth < 1024) {
                         toggleSidebar();
@@ -113,7 +148,12 @@ export default function Sidebar({ isOpen, desktopOpen, toggleSidebar }: SidebarP
               )}
             </>
           ) : (
-            <div className="px-4 py-2 text-[#dbdbd9]/70 text-sm">
+            <div
+              className={`px-4 py-2 text-[#dbdbd9]/70 text-sm ${filterUtilityClasses(
+                "dark:text-[#dbdbd9] text-gray-500",
+                theme
+              )}`}
+            >
               Sign in to see your learning history
             </div>
           )}
@@ -121,19 +161,41 @@ export default function Sidebar({ isOpen, desktopOpen, toggleSidebar }: SidebarP
       </div>
 
       {/* User profile section - at the bottom */}
-      <div className="mt-auto border-t border-[#303030]">
-        {status === 'authenticated' && session?.user ? (
+      <div
+        className={`mt-auto border-t ${filterUtilityClasses(
+          "dark:border-[#303030] border-gray-200",
+          theme
+        )}`}
+      >
+        {status === "authenticated" && session?.user ? (
           <div className="p-4">
             <div className="flex items-center space-x-3">
               <Avatar className="h-10 w-10 border border-[#dbdbd9]/20">
-                <AvatarImage src={session.user.image || ''} alt={session.user.name || ''} />
+                <AvatarImage
+                  src={session.user.image || ""}
+                  alt={session.user.name || ""}
+                />
                 <AvatarFallback className="bg-[#2563eb]">
                   {getInitials(session.user.name)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#dbdbd9] truncate">{session.user.name}</p>
-                <p className="text-xs text-[#dbdbd9]/70 truncate">{session.user.email}</p>
+                <p
+                  className={`text-sm font-medium ${filterUtilityClasses(
+                    "dark:text-[#dbdbd9] text-gray-950",
+                    theme
+                  )} truncate`}
+                >
+                  {session.user.name}
+                </p>
+                <p
+                  className={`text-sm font-medium ${filterUtilityClasses(
+                    "dark:text-[#dbdbd9]/70 text-gray-950/70",
+                    theme
+                  )} truncate`}
+                >
+                  {session.user.email}
+                </p>
               </div>
             </div>
             <div className="mt-4 flex space-x-2">
@@ -149,7 +211,7 @@ export default function Sidebar({ isOpen, desktopOpen, toggleSidebar }: SidebarP
         ) : (
           <div className="p-4">
             <button
-              onClick={() => window.location.href = '/api/auth/signin'}
+              onClick={() => (window.location.href = "/api/auth/signin")}
               className="w-full flex items-center justify-center space-x-2 bg-[#252828] hover:bg-[#303030] text-[#dbdbd9] px-4 py-2 rounded-md text-sm transition-colors"
             >
               <span>Sign In</span>
@@ -159,4 +221,4 @@ export default function Sidebar({ isOpen, desktopOpen, toggleSidebar }: SidebarP
       </div>
     </div>
   );
-} 
+}
