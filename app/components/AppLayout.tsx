@@ -1,8 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Navbar from './navbar';
-import Sidebar from './Sidebar';
+import { useState, useEffect } from "react";
+import Navbar from "./navbar";
+import Sidebar from "./Sidebar";
+import { useToggleTheme } from "../hooks/useToggleTheme";
+import { filterUtilityClasses } from "../utils/filterUtilityClasses";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -17,18 +19,18 @@ export default function AppLayout({ children, shareId }: AppLayoutProps) {
   // Set mounted state after hydration
   useEffect(() => {
     setMounted(true);
-    
+
     // Check if there's a saved preference for the sidebar state
-    const savedState = localStorage.getItem('desktopSidebarOpen');
+    const savedState = localStorage.getItem("desktopSidebarOpen");
     if (savedState !== null) {
-      setDesktopSidebarOpen(savedState === 'true');
+      setDesktopSidebarOpen(savedState === "true");
     }
   }, []);
 
   // Save sidebar state preference when it changes
   useEffect(() => {
     if (mounted) {
-      localStorage.setItem('desktopSidebarOpen', String(desktopSidebarOpen));
+      localStorage.setItem("desktopSidebarOpen", String(desktopSidebarOpen));
     }
   }, [desktopSidebarOpen, mounted]);
 
@@ -36,12 +38,21 @@ export default function AppLayout({ children, shareId }: AppLayoutProps) {
     // On mobile, toggle the mobile sidebar
     if (window.innerWidth < 1024) {
       setSidebarOpen(!sidebarOpen);
-    } 
+    }
     // On desktop, toggle the desktop sidebar
     else {
       setDesktopSidebarOpen(!desktopSidebarOpen);
     }
   };
+
+  const { theme } = useToggleTheme();
+
+  console.log(
+    filterUtilityClasses(
+      "relative min-h-screen dark:bg-[#151718] bg-white text-[#dbdbd9]",
+      theme
+    )
+  );
 
   // Show a simple loading state during SSR
   if (!mounted) {
@@ -58,52 +69,59 @@ export default function AppLayout({ children, shareId }: AppLayoutProps) {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#151718] text-[#dbdbd9]">
+    <div
+      className={filterUtilityClasses(
+        "relative min-h-screen dark:bg-[#151718] bg-white text-[#dbdbd9]",
+        theme
+      )}
+    >
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden" 
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div 
+      <div
         className={`
           fixed inset-y-0 left-0 z-50 
-          w-64 bg-[#202323] border-r border-[#303030]
+          w-64  border-r 
           transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          ${desktopSidebarOpen ? 'lg:translate-x-0' : 'lg:-translate-x-full'}
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          ${desktopSidebarOpen ? "lg:translate-x-0" : "lg:-translate-x-full"}
+          ${filterUtilityClasses(
+            "dark:bg-[#202323] bg-[#F9F9F9] dark:border-[#303030] border-gray-200",
+            theme
+          )}
         `}
       >
-        <Sidebar 
-          isOpen={sidebarOpen} 
+        <Sidebar
+          isOpen={sidebarOpen}
           desktopOpen={desktopSidebarOpen}
-          toggleSidebar={toggleSidebar} 
+          toggleSidebar={toggleSidebar}
         />
       </div>
 
       {/* Main content area */}
-      <div 
+      <div
         className={`
           min-h-screen
           transition-all duration-300 ease-in-out
-          ${desktopSidebarOpen ? 'lg:pl-64' : 'lg:pl-0'}
+          ${desktopSidebarOpen ? "lg:pl-64" : "lg:pl-0"}
         `}
       >
         {/* Navbar */}
-        <Navbar 
-          shareId={shareId} 
-          toggleSidebar={toggleSidebar} 
+        <Navbar
+          shareId={shareId}
+          toggleSidebar={toggleSidebar}
           desktopSidebarOpen={desktopSidebarOpen}
         />
-        
+
         {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8">
-          {children}
-        </main>
+        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );
-} 
+}

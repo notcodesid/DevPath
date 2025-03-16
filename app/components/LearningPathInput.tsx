@@ -1,9 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Send, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useState, useEffect } from "react";
+import { Send, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { filterUtilityClasses } from "../utils/filterUtilityClasses";
+import { useToggleTheme } from "../hooks/useToggleTheme";
 
 interface LearningStep {
   id: string;
@@ -19,38 +21,41 @@ interface LearningPathInputProps {
   onShareIdGenerated?: (shareId: string) => void;
 }
 
-export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: LearningPathInputProps) {
+export function LearningPathInput({
+  onPathGenerated,
+  onShareIdGenerated,
+}: LearningPathInputProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 2;
-  
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const generatePath = async (): Promise<{ steps: LearningStep[] }> => {
-    const response = await fetch('/api/generate-path', {
-      method: 'POST',
+    const response = await fetch("/api/generate-path", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ prompt: input }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to generate learning path');
+      throw new Error(errorData.error || "Failed to generate learning path");
     }
 
     const data = await response.json();
-    
+
     if (!data.steps || !Array.isArray(data.steps)) {
-      throw new Error('Invalid response format');
+      throw new Error("Invalid response format");
     }
 
     return data;
@@ -59,10 +64,10 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !mounted) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       let data;
       let currentRetry = 0;
@@ -77,34 +82,39 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
           }
           currentRetry++;
           // Wait before retrying (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, currentRetry) * 1000));
+          await new Promise((resolve) =>
+            setTimeout(resolve, Math.pow(2, currentRetry) * 1000)
+          );
         }
       }
 
       if (!data) {
-        throw new Error('Failed to generate learning path after retries');
+        throw new Error("Failed to generate learning path after retries");
       }
-      
+
       // Call onPathGenerated with the generated steps
       onPathGenerated(data.steps);
-      
+
       // Only save path if user is authenticated
       if (session?.user) {
         await saveLearningPath(data.steps);
       }
     } catch (error) {
-      console.error('Error generating learning path:', error);
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      
-      if (errorMessage.includes('timeout') || errorMessage.includes('abort')) {
-        setError('The request took too long. Please try again with a more specific query.');
+      console.error("Error generating learning path:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+
+      if (errorMessage.includes("timeout") || errorMessage.includes("abort")) {
+        setError(
+          "The request took too long. Please try again with a more specific query."
+        );
       } else {
         setError(errorMessage);
       }
 
       // Increment retry count if we haven't reached max retries
       if (retryCount < MAX_RETRIES) {
-        setRetryCount(prev => prev + 1);
+        setRetryCount((prev) => prev + 1);
       }
     } finally {
       setIsLoading(false);
@@ -113,10 +123,10 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
 
   const saveLearningPath = async (steps: LearningStep[]) => {
     try {
-      const response = await fetch('/api/save-path', {
-        method: 'POST',
+      const response = await fetch("/api/save-path", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           title: input,
@@ -127,21 +137,23 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save learning path');
+        throw new Error(errorData.error || "Failed to save learning path");
       }
 
       const data = await response.json();
-      
+
       if (onShareIdGenerated) {
         onShareIdGenerated(data.shareId);
       }
-      
+
       router.push(`/shared/${data.shareId}`);
     } catch (error) {
-      console.error('Error saving learning path:', error);
-      setError('Failed to save the learning path. Please try again.');
+      console.error("Error saving learning path:", error);
+      setError("Failed to save the learning path. Please try again.");
     }
   };
+
+  const { theme } = useToggleTheme();
 
   // Show a loading skeleton during SSR and initial client render
   if (!mounted) {
@@ -163,7 +175,10 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask anything..."
-            className="w-full px-6 py-4 text-[#dbdbd9] bg-[#202323] border border-[#dbdbd9]/10 rounded-full focus:outline-none focus:ring-2 focus:ring-[#dbdbd9]/20 placeholder-[#dbdbd9]/40 font-normal h-[60px] shadow-lg"
+            className={`w-full px-6 py-4 ${filterUtilityClasses(
+              "dark:bg-[#202323] bg-white dark:border-[#dbdbd9]/10 border-[#E5E5E5] dark:shadow-lg shadow-md dark:text-[#dbdbd9] text-black dark:placeholder-[#dbdbd9]/40 placeholder-gray-500 dark:focus:ring-[#dbdbd9]/20 focus:ring-gray-400",
+              theme
+            )}  border  rounded-full focus:outline-none focus:ring-2   font-normal h-[60px] `}
             disabled={isLoading}
           />
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
@@ -183,7 +198,7 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
           </div>
         </div>
       </form>
-      
+
       {error && (
         <div className="mt-4 p-4 bg-red-900/20 border border-red-900/30 rounded-md w-full">
           <p className="text-red-400">{error}</p>
@@ -196,4 +211,4 @@ export function LearningPathInput({ onPathGenerated, onShareIdGenerated }: Learn
       )}
     </div>
   );
-} 
+}
