@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useUser } from "@civic/auth/react";
 import { LogOut, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import {
@@ -32,7 +32,7 @@ export default function Sidebar({
   desktopOpen,
   toggleSidebar,
 }: SidebarProps) {
-  const { data: session, status } = useSession();
+  const { user, signOut } = useUser();
   const [paths, setPaths] = useState<LearningPath[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -48,12 +48,12 @@ export default function Sidebar({
 
   // Fetch user's learning paths
   useEffect(() => {
-    if (status === "authenticated") {
+    if (user) {
       fetchUserPaths();
     } else {
       setIsLoading(false);
     }
-  }, [status]);
+  }, [user]);
 
   const fetchUserPaths = async () => {
     try {
@@ -113,7 +113,7 @@ export default function Sidebar({
       {/* Learning paths list - flex-grow to push profile to bottom */}
       <div className="flex-grow overflow-y-auto py-2">
         <div className="space-y-1">
-          {status === "authenticated" ? (
+          {user ? (
             <>
               {isLoading ? (
                 <div className="px-4 py-2">
@@ -167,16 +167,16 @@ export default function Sidebar({
           theme
         )}`}
       >
-        {status === "authenticated" && session?.user ? (
+        {user ? (
           <div className="p-4">
             <div className="flex items-center space-x-3">
               <Avatar className="h-10 w-10 border border-[#dbdbd9]/20">
                 <AvatarImage
-                  src={session.user.image || ""}
-                  alt={session.user.name || ""}
+                  src={""}
+                  alt={user.name || ""}
                 />
                 <AvatarFallback className="bg-[#2563eb]">
-                  {getInitials(session.user.name)}
+                  {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
@@ -186,7 +186,7 @@ export default function Sidebar({
                     theme
                   )} truncate`}
                 >
-                  {session.user.name}
+                  {user.name}
                 </p>
                 <p
                   className={`text-sm font-medium ${filterUtilityClasses(
@@ -194,7 +194,7 @@ export default function Sidebar({
                     theme
                   )} truncate`}
                 >
-                  {session.user.email}
+                  {user.email}
                 </p>
               </div>
             </div>
@@ -211,7 +211,7 @@ export default function Sidebar({
         ) : (
           <div className="p-4">
             <button
-              onClick={() => (window.location.href = "/api/auth/signin")}
+              onClick={() => signOut()}
               className="w-full flex items-center justify-center space-x-2 bg-[#252828] hover:bg-[#303030] text-[#dbdbd9] px-4 py-2 rounded-md text-sm transition-colors"
             >
               <span>Sign In</span>

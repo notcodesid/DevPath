@@ -1,3 +1,5 @@
+const { createCivicAuthPlugin } = require("@civic/auth/nextjs");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -9,4 +11,8 @@ const nextConfig = {
   // Add other Next.js config options here as needed
 };
 
-module.exports = nextConfig; 
+const withCivicAuth = createCivicAuthPlugin({
+  clientId: "85828878-b84c-43cb-94a6-fde2fe10bdde"
+});
+
+module.exports = withCivicAuth(nextConfig); 

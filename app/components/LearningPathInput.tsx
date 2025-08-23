@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useUser } from "@civic/auth/react";
 import { filterUtilityClasses } from "../utils/filterUtilityClasses";
 import { useToggleTheme } from "../hooks/useToggleTheme";
 
@@ -26,7 +26,7 @@ export function LearningPathInput({
   onShareIdGenerated,
 }: LearningPathInputProps) {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { user } = useUser();
   const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -96,7 +96,7 @@ export function LearningPathInput({
       onPathGenerated(data.steps);
 
       // Only save path if user is authenticated
-      if (session?.user) {
+      if (user) {
         await saveLearningPath(data.steps);
       }
     } catch (error) {
@@ -131,7 +131,7 @@ export function LearningPathInput({
         body: JSON.stringify({
           title: input,
           steps: steps,
-          userId: session?.user?.id,
+          userId: user?.id,
         }),
       });
 

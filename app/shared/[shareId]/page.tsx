@@ -6,7 +6,7 @@ import { Loader2, Send } from "lucide-react";
 import Link from "next/link";
 import AppLayout from "@/app/components/AppLayout";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useUser } from "@civic/auth/react";
 import { useToggleTheme } from "@/app/hooks/useToggleTheme";
 import { filterUtilityClasses } from "@/app/utils/filterUtilityClasses";
 
@@ -33,7 +33,7 @@ interface PageProps {
 
 export default function SharedPathPage({ params }: PageProps) {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { user } = useUser();
   const [shareId, setShareId] = useState<string | undefined>(undefined);
 
   const [learningPath, setLearningPath] = useState<LearningPath | null>(null);
@@ -135,7 +135,7 @@ export default function SharedPathPage({ params }: PageProps) {
         body: JSON.stringify({
           title: input,
           steps: steps,
-          userId: session?.user?.id,
+          userId: user?.id,
         }),
       });
 
