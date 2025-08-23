@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getUser } from '@civic/auth/nextjs';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(req: Request) {
   try {
-    // Get the user session
-    const session = await getServerSession();
+    // Get the user from Civic Auth
+    const user = await getUser();
     
-    if (!session || !session.user) {
+    if (!user || !user.id) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     const userId = url.searchParams.get('userId');
     
     // Ensure the user is requesting their own learning paths
-    if (userId !== session.user.id) {
+    if (userId !== user.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }
@@ -28,7 +28,7 @@ export async function GET(req: Request) {
     
     // Fetch the user's learning paths
     const learningPaths = await prisma.learningPath.findMany({
-      where: { userId: session.user.id },
+      where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
     });
     

@@ -4,14 +4,13 @@ import { useState } from "react";
 import {
   Copy,
   Check,
-  LogIn,
   Menu,
   PanelLeftClose,
   PanelLeft,
   Sun,
   Moon,
 } from "lucide-react";
-import { useSession, signIn } from "next-auth/react";
+import { UserButton } from "@civic/auth/react";
 import { useToggleTheme } from "../hooks/useToggleTheme";
 import { filterUtilityClasses } from "../utils/filterUtilityClasses";
 
@@ -26,7 +25,6 @@ export default function Navbar({
   toggleSidebar,
   desktopSidebarOpen = true,
 }: NavbarProps) {
-  const { status } = useSession();
   const [copied, setCopied] = useState(false);
 
   const copyShareLink = () => {
@@ -98,16 +96,8 @@ export default function Navbar({
               </button>
             )}
 
-            {/* Only show sign in button if not authenticated and no sidebar toggle */}
-            {status !== "authenticated" && !toggleSidebar && (
-              <button
-                onClick={() => signIn("google")}
-                className="flex items-center space-x-2 bg-[#202323] hover:bg-[#252828] text-[#dbdbd9] px-4 py-2 rounded-md transition-colors"
-              >
-                <LogIn className="h-4 w-4" />
-                <span>Sign In</span>
-              </button>
-            )}
+            {/* Civic Auth User Button */}
+            <UserButton />
           </div>
 
           <div

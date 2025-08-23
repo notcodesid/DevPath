@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useUser } from "@civic/auth/react";
 import { useRouter } from "next/navigation";
 import AppLayout from "@/app/components/AppLayout";
 import Link from "next/link";
@@ -15,7 +15,7 @@ interface LearningPath {
 }
 
 export default function ProfilePage() {
-  const { status } = useSession();
+  const { user } = useUser();
   const router = useRouter();
   const [paths, setPaths] = useState<LearningPath[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,15 +23,15 @@ export default function ProfilePage() {
 
   useEffect(() => {
     // Redirect if not authenticated
-    if (status === "unauthenticated") {
+    if (!user) {
       router.push("/");
     }
 
     // Fetch user's learning paths
-    if (status === "authenticated") {
+    if (user) {
       fetchUserPaths();
     }
-  }, [status, router]);
+  }, [user, router]);
 
   const fetchUserPaths = async () => {
     try {
@@ -52,7 +52,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (status === "loading" || isLoading) {
+  if (!user || isLoading) {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[80vh]">

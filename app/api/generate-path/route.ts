@@ -9,8 +9,8 @@ interface LearningStep {
   subSteps: string[];
 }
 
-const apiKey = process.env.GEMINI_API_KEY;
-console.log('Gemini API Key (masked):', apiKey ? `${apiKey.substring(0, 3)}...${apiKey.substring(apiKey.length - 3)}` : 'undefined');
+const apiKey = process.env.ANTHROPIC_API_KEY;
+console.log('Anthropic API Key (masked):', apiKey ? `${apiKey.substring(0, 3)}...${apiKey.substring(apiKey.length - 3)}` : 'undefined');
 const FETCH_TIMEOUT = 15000; // Reduced to 15 seconds
 
 /**
@@ -45,10 +45,10 @@ const fetchWithTimeout = async (url: string, options: RequestInit) => {
 
 /**
  * The function POST asynchronously generates a detailed learning path based on user input by utilizing
- * the Gemini API and returns it in a specific JSON format.
+ * the Anthropic API and returns it in a specific JSON format.
  * @param {Request} req - The `POST` function you provided is an asynchronous function that handles a
  * POST request. It takes a `Request` object (`req`) as a parameter. Within the function, it processes
- * the request data, constructs a prompt based on the request, sends a request to the Gemini API with
+ * the request data, constructs a prompt based on the request, sends a request to the Anthropic API with
  * the prompt,
  * @returns The `POST` function is returning the generated learning path in JSON format. The learning
  * path includes steps with titles, durations, descriptions, and substeps that contain specific tasks,
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     const { prompt } = await req.json();
 
     if (!apiKey) {
-      throw new Error('Gemini API key is not configured');
+      throw new Error('Anthropic API key is not configured');
     }
 
     // Changed the system prompt to be more concise 
@@ -93,40 +93,36 @@ Make it practical and achievable.`;
     const fullPrompt = `${systemPrompt}\n\nUser request: ${prompt}`;
 
     const response = await fetchWithTimeout(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      'https://api.anthropic.com/v1/messages',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          contents: [
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 2048,
+          temperature: 0.5,
+          messages: [
             {
-              parts: [
-                {
-                  text: fullPrompt
-                }
-              ]
+              role: 'user',
+              content: fullPrompt
             }
-          ],
-          generationConfig: {
-            temperature: 0.5, // Reduced for more focused responses
-            maxOutputTokens: 2048, // Reduced for faster generation
-            topP: 0.8, // Added for more focused responses
-            topK: 40 // Added for more focused responses
-          }
+          ]
         }),
       }
     );
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Gemini API error:', errorData);
-      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+      console.error('Anthropic API error:', errorData);
+      throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
-    const text = data.candidates[0].content.parts[0].text;
+    const text = data.content[0].text;
 
     // Parse the JSON from the response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -151,7 +147,7 @@ Make it practical and achievable.`;
         }));
 
       } catch (e) {
-        console.error('Error parsing JSON from Gemini response:', e);
+        console.error('Error parsing JSON from Anthropic response:', e);
         throw new Error('Failed to parse learning path data');
       }
     } else {
